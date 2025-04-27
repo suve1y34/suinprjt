@@ -1,0 +1,36 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+spring:
+  datasource:
+    jdbc-url: jdbc:mysql://localhost:3306/suinproject?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: root
+    password: ysI20190717@@
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 30000
+      pool-name: MyHikariCP
+      max-lifetime: 1800000
+      connection-timeout: 30000
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQL8Dialect
+
+mybatis:
+  mapper-locations: classpath:sqlmapper/**/*.xml
+  type-aliases-package: co.kr.sikim.suinproject.domain
+
+logging:
+  level:
+    root: INFO
+    co.kr.sikim.suinproject: DEBUG
