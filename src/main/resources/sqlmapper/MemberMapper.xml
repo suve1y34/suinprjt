@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="co.kr.sikim.suinproject.mapper.MemberMapper">
+    <insert id="insertUser" useGeneratedKeys="true" keyProperty="memSeqno">
+        INSERT INTO member
+        (
+            member_id,
+            password,
+            name,
+            email,
+            country_code,
+            phone,
+            role_no,
+            status_no,
+            created_at
+        )
+        VALUES
+        (
+            #{memberId},
+            #{password},
+            #{name},
+            #{email},
+            #{countryCode},
+            #{phone},
+            #{roleNo},
+            #{statusNo},
+            NOW()
+        )
+    </insert>
+</mapper>
