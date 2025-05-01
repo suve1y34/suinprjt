@@ -30,8 +30,7 @@ public class DBConfiguration {
     @Bean(name = "dataSource", destroyMethod = "close")
     @Primary
     public DataSource dataSource() {
-        DataSource dataSource = new HikariDataSource(hikariConfig());
-        return dataSource;
+        return new HikariDataSource(hikariConfig());
     }
 
     @Bean("transactionManager")
@@ -47,8 +46,8 @@ public class DBConfiguration {
     public SqlSessionFactory sqlSessionFactory(@Qualifier("dataSource") DataSource dataSource) throws Exception {
         SqlSessionFactoryBean sqlSessionFactoryBean = new SqlSessionFactoryBean();
         sqlSessionFactoryBean.setDataSource(dataSource);
-        sqlSessionFactoryBean.setMapperLocations(applicationContext.getResources("classpath:/sqlmapper/*.xml"));
-        sqlSessionFactoryBean.setConfigLocation(applicationContext.getResource("classpath:sqlmapper/config/SqlMapConfig.xml"));
+        sqlSessionFactoryBean.setMapperLocations(applicationContext.getResources("classpath:/sqlmapper/**/*.xml"));
+        // sqlSessionFactoryBean.setConfigLocation(applicationContext.getResource("classpath:sqlmapper/config/SqlMapConfig.xml"));
         return sqlSessionFactoryBean.getObject();
     }
 

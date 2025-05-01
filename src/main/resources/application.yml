@@ -29,6 +29,9 @@ spring:
 mybatis:
   mapper-locations: classpath:sqlmapper/**/*.xml
   type-aliases-package: co.kr.sikim.suinproject.domain
+  configuration:
+    mapper-lazy-initialization: true
+    fail-fast: true 
 
 logging:
   level:

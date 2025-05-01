@@ -3,7 +3,7 @@
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="co.kr.sikim.suinproject.mapper.MemberMapper">
+<mapper namespace="co.kr.sikim.suinproject.mapper.user.UserMapper">
     <insert id="insertUser" useGeneratedKeys="true" keyProperty="memSeqno">
         INSERT INTO member
         (
@@ -30,4 +30,20 @@
             NOW()
         )
     </insert>
+
+    <select id="loginUser" resultType="co.kr.sikim.suinproject.domain.User"></select>
+
+    <select id="isIdDuplicate" resultType="int"></select>
+
+    <select id="isNicknameDuplicate" resultType="int"></select>
+
+    <update id="resetPassword"></update>
+
+    <update id="changePassword"></update>
+
+    <select id="getUserInfo" resultType="co.kr.sikim.suinproject.domain.User"></select>
+
+    <select id="updateUserInfo" resultType="co.kr.sikim.suinproject.domain.User"></select>
+
+    <update id="withdrawUser"></udpate>
 </mapper>

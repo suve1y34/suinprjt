@@ -1,11 +1,7 @@
-package co.kr.sikim.suinproject.domain;
-
-import java.time.LocalDateTime;
+package co.kr.sikim.suinproject.dto.user.request;
 
 @lombok.Getter
-@lombok.Setter
-public class User {
-    private Long memSeqno;
+public class SignupRequest {
     private String memberId;
     private String password;
     private String name;
@@ -14,6 +10,4 @@ public class User {
     private String phone;
     private int roleNo;
     private int statusNo;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 }
