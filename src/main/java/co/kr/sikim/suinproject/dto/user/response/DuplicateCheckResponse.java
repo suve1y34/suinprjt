@@ -1,7 +1,8 @@
 package co.kr.sikim.suinproject.dto.user.response;
 
-@lombok.Getter
-@lombok.Setter
+import lombok.Getter;
+
+@Getter
 public class DuplicateCheckResponse {
     private boolean isDuplicate;
 

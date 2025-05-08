@@ -22,7 +22,7 @@ public interface UserService {
 
     DuplicateCheckResponse isIdDuplicate(String memberId);
 
-    DuplicateCheckResponse isN0icknameDuplicate(String nickname);
+    DuplicateCheckResponse isNicknameDuplicate(String nickname);
 
     void resetPassword(ResetPasswordRequest request);
 

@@ -1,7 +1,10 @@
 package co.kr.sikim.suinproject.dto.user.response;
 
-@lombok.Getter
-@lombok.Setter
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+@Getter
+@AllArgsConstructor
 public class LoginResponse {
     private String accessToken;
     private String refreshToken;

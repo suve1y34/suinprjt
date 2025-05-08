@@ -45,5 +45,5 @@
 
     <select id="updateUserInfo" resultType="co.kr.sikim.suinproject.domain.User"></select>
 
-    <update id="withdrawUser"></udpate>
+    <update id="withdrawUser"></update>
 </mapper>

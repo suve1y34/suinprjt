@@ -14,7 +14,8 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class UserServiceImpl implements UserService {@Override
+public class UserServiceImpl implements UserService {
+    @Override
     public void sinupUser(SignupRequest request) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'sinupUser'");
@@ -33,7 +34,7 @@ public class UserServiceImpl implements UserService {@Override
     }
 
     @Override
-    public DuplicateCheckResponse isN0icknameDuplicate(String nickname) {
+    public DuplicateCheckResponse isNicknameDuplicate(String nickname) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'isN0icknameDuplicate'");
     }

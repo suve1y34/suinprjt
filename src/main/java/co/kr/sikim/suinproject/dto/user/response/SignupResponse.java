@@ -5,12 +5,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class UserInfoResponse {
+public class SignupResponse {
     private Long memSeqno;
     private String memberId;
-    private String name;
-    private String email;
-    private String phone;
-    private int roleNo;
-    private int statusNo;
 }
