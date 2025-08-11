@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface BookService {
     List<BookResponse> listBooks(String keyword);
-    BookResponse getBookById(Long bookId);
+    BookResponse getBook(Long bookId);
 }

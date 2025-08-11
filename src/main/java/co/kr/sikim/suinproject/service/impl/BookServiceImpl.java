@@ -25,7 +25,7 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public BookResponse getBookById(Long bookId) {
+    public BookResponse getBook(Long bookId) {
         Book book = bookMapper.selectBookById(bookId);
         if (book == null) {
             throw new IllegalArgumentException("book not found: " + bookId);

@@ -23,7 +23,7 @@ public class BookController {
 
     // 상세 조회
     @PostMapping("/detail")
-    public BookResponse getBookById(@RequestParam Long bookId) {
+    public BookResponse getBook(@RequestParam Long bookId) {
         return bookSer.getBookById(bookId);
     }
 }
