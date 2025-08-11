@@ -2,7 +2,6 @@ package co.kr.sikim.suinproject.controller;
 
 import org.springframework.web.bind.annotation.RestController;
 
-import co.kr.sikim.suinproject.domain.NoCode;
 import co.kr.sikim.suinproject.mapper.TestMapper;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,11 +22,4 @@ public class OpenController {
     public String hello() {
         return "Hello Suin";
     }
-    
-    @GetMapping("/dbTest")
-    public String testDB(@RequestParam String param) {
-        NoCode noCode = testMapper.getOne();
-        return noCode.getGroup_name();
-    }
-    
 }
