@@ -37,3 +37,7 @@ logging:
   level:
     root: INFO
     co.kr.sikim.suinproject: DEBUG
+
+jwt:
+  secret: my-secret-key-please-change
+  expire-minutes: 60

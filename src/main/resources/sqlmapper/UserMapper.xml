@@ -1,0 +1,47 @@
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="co.kr.sikim.suinproject.mapper.UserMapper">
+    <resultMap id="UserMap" type="co.kr.sikim.suinproject.domain.User">
+        <id     property="userId"           column="user_id"/>
+        <result property="userEmail"        column="user_email"/>
+        <result property="userPassword"     column="user_password"/>
+        <result property="userName"         column="user_name"/>
+        <result property="nickname"         column="nickname"/>
+        <result property="createdDatetime"  column="created_datetime"/>
+        <result property="modifiedDatetime" column="modified_datetime"/>
+    </resultMap>
+
+    <select id="selectUserById" parameterType="long" resultMap="UserMap">
+        SELECT * FROM `user` WHERE user_id = #{userId}
+    </select>
+
+    <select id="selectUserByEmail" parameterType="string" resultMap="UserMap">
+        SELECT * FROM `user` WHERE user_email = #{userEmail}
+    </select>
+
+    <select id="existsUserByUserEmail" parameterType="string" resultType="boolean">
+        SELECT CASE WHEN COUNT(1) > 0 THEN TRUE ELSE FALSE END
+        FROM `user` WHERE user_email = #{userEmail}
+    </select>
+
+    <insert id="insertUser" parameterType="co.kr.sikim.suinproject.domain.User" useGeneratedKeys="true" keyProperty="userId">
+        INSERT INTO `user`
+        (user_email, user_password, user_name, nickname)
+        VALUES
+        (#{userEmail}, #{userPassword}, #{userName}, #{nickname})
+    </insert>
+
+    <update id="updateUser" parameterType="co.kr.sikim.suinproject.domain.User">
+        UPDATE `user`
+        SET user_email = #{userEmail},
+        user_name  = #{userName},
+        nickname   = #{nickname}
+        WHERE user_id = #{userId}
+    </update>
+
+    <delete id="deleteUserById" parameterType="long">
+        DELETE FROM `user` WHERE user_id = #{userId}
+    </delete>
+</mapper>
