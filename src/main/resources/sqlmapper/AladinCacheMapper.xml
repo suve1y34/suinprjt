@@ -1,0 +1,35 @@
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="co.kr.sikim.suinproject.mapper.AladinCacheMapper">
+    <resultMap id="AladinCacheMap" type="co.kr.sikim.suinproject.domain.AladinCache">
+        <id     property="isbn13Code"         column="isbn13_code"/>
+        <result property="rawJson"            column="raw_json"/>
+        <result property="lastSyncedDatetime" column="last_synced_datetime"/>
+    </resultMap>
+
+    <select id="selectAladinCacheByIsbn13Code" parameterType="string" resultMap="AladinCacheMap">
+        SELECT isbn13_code, raw_json, last_synced_datetime
+        FROM aladin_cache
+        WHERE isbn13_code = #{isbn13Code}
+    </select>
+
+    <select id="existAladinCacheByIsbn13Code" parameterType="string" resultType="boolean">
+        SELECT CASE WHEN COUNT(1) > 0 THEN TRUE ELSE FALSE END
+        FROM aladin_cache
+        WHERE isbn13_code = #{isbn13Code}
+    </select>
+
+    <insert id="insertAladinCache" parameterType="co.kr.sikim.suinproject.domain.AladinCache">
+        INSERT INTO aladin_cache (isbn13_code, raw_json, last_synced_datetime)
+        VALUES (#{isbn13Code}, #{rawJson}, NOW())
+    </insert>
+
+    <update id="updateAladinCache" parameterType="co.kr.sikim.suinproject.domain.AladinCache">
+        UPDATE aladin_cache
+        SET raw_json = #{rawJson},
+            last_synced_datetime = NOW()
+        WHERE isbn13_code = #{isbn13Code}
+    </update>
+</mapper>
