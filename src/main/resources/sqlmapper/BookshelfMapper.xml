@@ -19,15 +19,15 @@
         SELECT
             COUNT(*)
         FROM
-            shelf_book sb
+            shelf_book
         WHERE
-            sb.user_id = #{userId}
+            bookshelf_id = #{bookshelfId}
     </select>
 
-    <select id="existsBookshelfById" resultType="boolean">
+    <select id="existBookshelfById" resultType="boolean">
         SELECT
             EXISTS(
-                SELECT 1 FROM bookshelf WHERE user_id = #{userId}
+                SELECT 1 FROM bookshelf WHERE bookshelf_id = #{bookshelfId}
             )
     </select>
 </mapper>

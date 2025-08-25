@@ -3,11 +3,14 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="co.kr.sikim.suinproject.mapper.ShelfItemMapper">
-    <resultMap id="ShelfItemMap" type="co.kr.sikim.suinproject.domain.ShelfItem">
+    <resultMap id="ShelfItemMap" type="co.kr.sikim.suinproject.domain.ShelfItemJoinRow">
         <id     column="shelf_book_id" property="shelfBookId"/>
         <result column="bookshelf_id" property="bookshelfId"/>
         <result column="book_id" property="bookId"/>
-        <result column="added_datetime" property="added_datetime"/>
+        <result column="title" property="title"/>
+        <result column="author" property="author"/>
+        <result column="pages" property="pages"/>
+        <result column="added_datetime" property="addedDatetime"/>
         <result column="modified_datetime" property="modifiedDatetime"/>
     </resultMap>
 
@@ -28,7 +31,7 @@
         DELETE FROM shelf_book WHERE shelf_book_id = #{shelfBookId}
     </delete>
 
-    <select id="existShelfItemById" resultType="boolean">
+    <select id="existsBookshelfById" resultType="boolean">
         SELECT EXISTS(
             SELECT 1 FROM shelf_book
             WHERE bookshelf_id = #{bookshelfId}
@@ -47,9 +50,14 @@
 
     <select id="selectShelfItemsByShelfId" resultMap="ShelfItemMap">
         SELECT
-            shelf_book_id, bookshelf_id, book_id, added_datetime, modified_datetime
+            sb.shelf_book_id, sb.bookshelf_id, sb.book_id, sb.added_datetime, sb.modified_datetime,
+            b.title, b.author, b.pages
         FROM
-            shelf_book
+            shelf_book sb
+        JOIN
+            book b
+        ON
+            b.book_id = sb.book_id
         WHERE
             bookshelf_id = #{bookshelfId}
         ORDER BY

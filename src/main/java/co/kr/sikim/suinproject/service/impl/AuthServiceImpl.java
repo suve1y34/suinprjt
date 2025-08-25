@@ -13,21 +13,21 @@ import org.springframework.stereotype.Service;
 @Service
 public class AuthServiceImpl implements AuthService {
 
-    private final UserService userService;
+    private final UserService userSer;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
 
     public AuthServiceImpl(UserService userService,
                            PasswordEncoder passwordEncoder,
                            JwtTokenProvider jwtTokenProvider) {
-        this.userService = userService;
+        this.userSer = userService;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenProvider = jwtTokenProvider;
     }
 
     @Override
     public AuthLoginResponse login(String email, String rawPassword) {
-        User user = userService.getUserByEmail(email)
+        User user = userSer.getUserByEmail(email)
                 .orElseThrow(() -> new UnauthorizedException("Invalid email or password"));
 
         if (!passwordEncoder.matches(rawPassword, user.getUserPassword())) {

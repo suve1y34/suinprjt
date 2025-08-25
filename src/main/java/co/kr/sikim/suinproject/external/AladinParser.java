@@ -41,6 +41,13 @@ public class AladinParser {
                     pages = it.get("subInfo").get("itemPage").asInt();
                 }
 
+                // 알라딘 에러 형식 처리
+                if (root.hasNonNull("errorCode")) {
+                    String code = root.get("errorCode").asText();
+                    String msg  = root.hasNonNull("errorMessage") ? root.get("errorMessage").asText() : "Unknown error";
+                    throw new IllegalStateException("Aladin error " + code + ": " + msg);
+                }
+
                 String pubDate = normalizeDate(pubDateRaw);
 
                 result.add(new AladinBookResponse(

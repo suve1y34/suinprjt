@@ -17,11 +17,11 @@ public class BookshelfServiceImpl implements BookshelfService {
 
     @Override
     public BookshelfResponse getShelf(Long userId) {
-        if (!bsMapper.existBookshelfById(userId))
-            throw new IllegalArgumentException("bookshelf not found");
-
         Bookshelf bs = bsMapper.selectBookshelfById(userId);
-        int count = bsMapper.countShelfItems(userId);
+        int count = bsMapper.countShelfItems(bs.getBookshelfId());
+
+        if (!bsMapper.existBookshelfById(bs.getBookshelfId()))
+            throw new IllegalArgumentException("bookshelf not found");
 
         BookshelfResponse res = new BookshelfResponse();
         res.setBookshelfId(bs.getBookshelfId());

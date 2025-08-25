@@ -13,20 +13,21 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class BookServiceImpl implements BookService {
-    private final BookMapper bookMapper;
+    private final BookMapper bMapper;
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     @Override
     public List<BookResponse> listBooks(String keyword) {
         String word = (keyword == null || keyword.trim().isEmpty()) ? null : keyword.trim();
-        return bookMapper.selectBooks(word).stream()
+        return bMapper.selectBooks(word).stream()
                 .map(this::toDto)
                 .toList();
     }
 
     @Override
     public BookResponse getBook(Long bookId) {
-        Book book = bookMapper.selectBookById(bookId);
+        Book book = bMapper.selectBookById(bookId);
+        System.out.println(book.getBookId());
         if (book == null) {
             throw new IllegalArgumentException("book not found: " + bookId);
         }

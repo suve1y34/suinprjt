@@ -2,6 +2,7 @@ package co.kr.sikim.suinproject.service.impl;
 
 import co.kr.sikim.suinproject.domain.Book;
 import co.kr.sikim.suinproject.domain.ShelfItem;
+import co.kr.sikim.suinproject.domain.ShelfItemJoinRow;
 import co.kr.sikim.suinproject.dto.shelfitem.ShelfItemAddRequest;
 import co.kr.sikim.suinproject.dto.shelfitem.ShelfItemResponse;
 import co.kr.sikim.suinproject.dto.shelfitem.ShelfItemDeleteRequest;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -31,17 +33,15 @@ public class ShelfItemServiceImpl implements ShelfItemService {
         if (!bsMapper.existBookshelfById(bookshelfId)) {
             throw new IllegalArgumentException("bookshelf not found");
         }
+
         return sbMapper.selectShelfItemsByShelfId(bookshelfId).stream().map(si -> {
-            Book b = bMapper.selectBookById(si.getBookId());
             ShelfItemResponse r = new ShelfItemResponse();
             r.setShelfBookId(si.getShelfBookId());
             r.setBookshelfId(si.getBookshelfId());
             r.setBookId(si.getBookId());
-            if (b != null) {
-                r.setTitle(b.getTitle());
-                r.setAuthor(b.getAuthor());
-                r.setPages(b.getPages());
-            }
+            r.setTitle(si.getTitle());
+            r.setAuthor(si.getAuthor());
+            r.setPages(si.getPages());
             r.setAddedDatetime(si.getAddedDatetime() != null ? si.getAddedDatetime().format(DT) : null);
             return r;
         }).toList();
@@ -57,7 +57,7 @@ public class ShelfItemServiceImpl implements ShelfItemService {
         if (b == null) {
             throw new IllegalArgumentException("book not found: " + req.getBookId());
         }
-        if (sbMapper.existShelfItemById(req.getBookshelfId(), req.getBookId())) {
+        if (sbMapper.existsBookshelfById(req.getBookshelfId(), req.getBookId())) {
             throw new IllegalArgumentException("already exists in shelf: bookId=" + req.getBookId());
         }
 
@@ -74,14 +74,13 @@ public class ShelfItemServiceImpl implements ShelfItemService {
         r.setTitle(b.getTitle());
         r.setAuthor(b.getAuthor());
         r.setPages(b.getPages());
-        // addedDatetime은 insert 직후 DB default라 null일 수 있음(목록 응답에서 보유)
         return r;
     }
 
     @Transactional
     @Override
     public ShelfItemResponse updateShelfItem(ShelfItemUpdateRequest req) {
-        ShelfItem current = sbMapper.selectShelfItemById(req.getShelfBookId());
+        ShelfItemJoinRow current = sbMapper.selectShelfItemById(req.getShelfBookId());
         if (current == null) {
             throw new IllegalArgumentException("shelf item not found: " + req.getShelfBookId());
         }
@@ -93,7 +92,7 @@ public class ShelfItemServiceImpl implements ShelfItemService {
         }
 
         // 갱신 후 응답용 조회 + Book 조인
-        ShelfItem fresh = sbMapper.selectShelfItemById(req.getShelfBookId());
+        ShelfItemJoinRow fresh = sbMapper.selectShelfItemById(req.getShelfBookId());
         Book b = bMapper.selectBookById(fresh.getBookId());
         ShelfItemResponse r = new ShelfItemResponse();
         r.setShelfBookId(fresh.getShelfBookId());

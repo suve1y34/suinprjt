@@ -9,11 +9,12 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
 @Component
-public class JwtAuthenticationFilter extends org.springframework.web.filter.OncePerRequestFilter {
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider tokenProvider;
 
@@ -24,10 +25,14 @@ public class JwtAuthenticationFilter extends org.springframework.web.filter.Once
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
+                                    FilterChain filterChain)
+            throws ServletException, IOException {
+
         String token = resolveToken(request);
 
-        if (StringUtils.hasText(token) && tokenProvider.validateToken(token)) {
+        if (StringUtils.hasText(token) && tokenProvider.validateToken(token)
+                && SecurityContextHolder.getContext().getAuthentication() == null) {
+
             Long userId = tokenProvider.getUserId(token);
 
             UsernamePasswordAuthenticationToken authentication =

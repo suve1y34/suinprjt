@@ -10,23 +10,23 @@ import java.util.Optional;
 @Service
 public class UserServiceImpl implements UserService {
 
-    private final UserMapper userMapper;
+    private final UserMapper uMapper;
     public UserServiceImpl(UserMapper userMapper) {
-        this.userMapper = userMapper;
+        this.uMapper = userMapper;
     }
 
     @Override
     public Optional<User> getUser(Long userId) {
-        return Optional.ofNullable(userMapper.selectUserById(userId));
+        return Optional.ofNullable(uMapper.selectUserById(userId));
     }
 
     @Override
     public Optional<User> getUserByEmail(String userEmail) {
-        return Optional.ofNullable(userMapper.selectUserByEmail(userEmail));
+        return Optional.ofNullable(uMapper.selectUserByEmail(userEmail));
     }
 
     @Override
     public boolean checkDuplicatedUserEmail(String userEmail) {
-        return userMapper.existsUserByUserEmail(userEmail);
+        return uMapper.existsUserByUserEmail(userEmail);
     }
 }

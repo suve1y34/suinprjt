@@ -37,7 +37,7 @@
             b.*
         FROM
             book b
-        ORDER BY
+        WHERE
             b.book_id = #{bookId}
     </select>
 </mapper>
