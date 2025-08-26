@@ -1,15 +1,19 @@
 package co.kr.sikim.suinproject.mapper;
 
+import co.kr.sikim.suinproject.domain.Bookshelf;
 import co.kr.sikim.suinproject.domain.ShelfItem;
 import co.kr.sikim.suinproject.domain.ShelfItemJoinRow;
-import co.kr.sikim.suinproject.dto.shelfitem.ShelfItemResponse;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
 @Mapper
-public interface ShelfItemMapper {
+public interface ShelfMapper {
+    Bookshelf selectBookshelfById(@Param("userId") Long userId);
+    Integer countShelfItems(@Param("bookshelfId") Long bookshelfId);
+    boolean existBookshelfById(@Param("bookshelfId") Long bookshelfId);
+
     int insertShelfItem(ShelfItem item); // 독서 등록
     int updateShelfItem(ShelfItem item); // 독서 수정
     int deleteShelfItemById(@Param("shelfBookId") Long shelfBookId); // 독서 삭제

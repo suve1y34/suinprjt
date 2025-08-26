@@ -12,4 +12,10 @@ public interface BookMapper {
     List<Book> selectBooks(@Param("keyword") String keyword);
     // 책 상세 조회
     Book selectBookById(@Param("bookId") Long bookId);
+    // 책 존재여부
+    boolean existsBookByIsbn13Code(@Param("isbn13Code") String isbn13Code);
+    // isbncode로 책 조회
+    Book selectBookByIsbn13Code(@Param("isbn13Code") String isbn13Code);
+    int insertBook(Book book);
+    int updateBook(Book book);
 }

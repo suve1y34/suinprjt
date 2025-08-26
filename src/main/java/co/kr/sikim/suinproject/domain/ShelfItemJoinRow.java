@@ -12,6 +12,8 @@ public class ShelfItemJoinRow {
     private String title;
     private String author;
     private Integer pages;
+    private Integer currentPage;
+    private String readingStatus;
     private LocalDateTime addedDatetime;  // DATE_FORMAT으로 문자열 확정
     private LocalDateTime modifiedDatetime;
 }

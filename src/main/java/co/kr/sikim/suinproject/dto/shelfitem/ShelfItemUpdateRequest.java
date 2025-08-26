@@ -9,4 +9,8 @@ import java.math.BigDecimal;
 @Setter
 public class ShelfItemUpdateRequest {
     private Long shelfBookId;
+
+    private Integer currentPage;
+    // 도서 상태 (null이면 변경x)
+    private String readingStatus;
 }

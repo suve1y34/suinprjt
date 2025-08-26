@@ -20,6 +20,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public ApiResponse<AuthLoginResponse> login(@RequestBody AuthLoginRequest req) {
+        System.out.println("--" + req.getEmail());
         return ApiResponse.ok(authService.login(req.getEmail(), req.getPassword()));
     }
 

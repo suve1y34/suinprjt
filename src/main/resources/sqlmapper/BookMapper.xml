@@ -40,4 +40,36 @@
         WHERE
             b.book_id = #{bookId}
     </select>
+
+    <select id="existsBookByIsbn13Code" parameterType="string" resultType="boolean">
+        SELECT
+            EXISTS(
+                SELECT 1 FROM book WHERE isbn13_code = #{isbn13Code}
+            )
+    </select>
+
+    <select id="selectBookByIsbn13Code" parameterType="string" resultMap="BookMap">
+        SELECT
+            book_id, isbn13_code, title, author, CAST(pages AS SIGNED) AS pages, publisher, pub_date
+        FROM
+            book
+        WHERE
+            isbn13_code = #{isbn13Code}
+    </select>
+
+    <insert id="insertBook" parameterType="co.kr.sikim.suinproject.domain.Book"
+            useGeneratedKeys="true" keyProperty="bookId">
+        INSERT INTO book (isbn13_code, title, author, pages, publisher, pub_date)
+        VALUES (#{isbn13Code}, #{title}, #{author}, #{pages}, #{publisher}, #{pubDate})
+    </insert>
+
+    <update id="updateBook" parameterType="co.kr.sikim.suinproject.domain.Book">
+        UPDATE book
+        SET title = #{title},
+        author = #{author},
+        pages = #{pages},
+        publisher = #{publisher},
+        pub_date = #{pubDate}
+        WHERE isbn13_code = #{isbn13Code}
+    </update>
 </mapper>

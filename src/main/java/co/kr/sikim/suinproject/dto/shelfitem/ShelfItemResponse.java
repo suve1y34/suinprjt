@@ -12,5 +12,8 @@ public class ShelfItemResponse {
     private String title;
     private String author;
     private Integer pages;
+    private Integer currentPage;
+    private String readingStatus;
     private String addedDatetime;
+    private String modifiedDatetime;
 }

@@ -1,10 +1,11 @@
 package co.kr.sikim.suinproject.controller;
 
+import co.kr.sikim.suinproject.dto.shelf.BookshelfResponse;
 import co.kr.sikim.suinproject.dto.shelfitem.ShelfItemAddRequest;
 import co.kr.sikim.suinproject.dto.shelfitem.ShelfItemDeleteRequest;
 import co.kr.sikim.suinproject.dto.shelfitem.ShelfItemResponse;
 import co.kr.sikim.suinproject.dto.shelfitem.ShelfItemUpdateRequest;
-import co.kr.sikim.suinproject.service.ShelfItemService;
+import co.kr.sikim.suinproject.service.ShelfService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,8 +14,14 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/shelves/books")
 @RequiredArgsConstructor
-public class ShelfBookController {
-    private final ShelfItemService siSer;
+public class ShelfController {
+
+    private final ShelfService siSer;
+
+    @PostMapping("/me")
+    public BookshelfResponse getBookshelf(@RequestParam Long userId) {
+        return siSer.getShelf(userId);
+    }
 
     // 목록 조회
     @PostMapping("/list")

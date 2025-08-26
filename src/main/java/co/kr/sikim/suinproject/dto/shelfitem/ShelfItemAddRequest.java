@@ -10,5 +10,13 @@ import java.math.BigDecimal;
 public class ShelfItemAddRequest {
     private Long bookshelfId;
     private Long bookId;
-    private BigDecimal spineWidth;
+    private String isbn13Code;
+
+    private String title;
+    private String author;
+    private Integer pages;
+    private String publisher;
+    private String pubDate;
+
+    private String readingStatus;
 }

@@ -1,36 +1,51 @@
 package co.kr.sikim.suinproject.service.impl;
 
 import co.kr.sikim.suinproject.domain.Book;
+import co.kr.sikim.suinproject.domain.Bookshelf;
 import co.kr.sikim.suinproject.domain.ShelfItem;
 import co.kr.sikim.suinproject.domain.ShelfItemJoinRow;
+import co.kr.sikim.suinproject.dto.shelf.BookshelfResponse;
 import co.kr.sikim.suinproject.dto.shelfitem.ShelfItemAddRequest;
 import co.kr.sikim.suinproject.dto.shelfitem.ShelfItemResponse;
 import co.kr.sikim.suinproject.dto.shelfitem.ShelfItemDeleteRequest;
 import co.kr.sikim.suinproject.dto.shelfitem.ShelfItemUpdateRequest;
 import co.kr.sikim.suinproject.mapper.BookMapper;
-import co.kr.sikim.suinproject.mapper.BookshelfMapper;
-import co.kr.sikim.suinproject.mapper.ShelfItemMapper;
-import co.kr.sikim.suinproject.service.ShelfItemService;
+import co.kr.sikim.suinproject.mapper.ShelfMapper;
+import co.kr.sikim.suinproject.service.ShelfService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-public class ShelfItemServiceImpl implements ShelfItemService {
-    private final ShelfItemMapper sbMapper;
-    private final BookshelfMapper bsMapper;
+public class ShelfServiceImpl implements ShelfService {
+    private final ShelfMapper sbMapper;
     private final BookMapper bMapper;
 
     private static final DateTimeFormatter DT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Override
+    public BookshelfResponse getShelf(Long userId) {
+        Bookshelf bs = sbMapper.selectBookshelfById(userId);
+        int count = sbMapper.countShelfItems(bs.getBookshelfId());
+
+        if (!sbMapper.existBookshelfById(bs.getBookshelfId()))
+            throw new IllegalArgumentException("bookshelf not found");
+
+        BookshelfResponse res = new BookshelfResponse();
+        res.setBookshelfId(bs.getBookshelfId());
+        res.setUserId(bs.getUserId());
+        res.setItemCount(count);
+
+        return res;
+    }
+
+    @Override
     public List<ShelfItemResponse> listShelfItems(Long bookshelfId) {
-        if (!bsMapper.existBookshelfById(bookshelfId)) {
+        if (!sbMapper.existBookshelfById(bookshelfId)) {
             throw new IllegalArgumentException("bookshelf not found");
         }
 
@@ -50,12 +65,35 @@ public class ShelfItemServiceImpl implements ShelfItemService {
     @Transactional
     @Override
     public ShelfItemResponse createShelfItem(ShelfItemAddRequest req) {
-        if (!bsMapper.existBookshelfById(req.getBookshelfId())) {
+        if (!sbMapper.existBookshelfById(req.getBookshelfId())) {
             throw new IllegalArgumentException("bookshelf not found: " + req.getBookshelfId());
         }
-        Book b = bMapper.selectBookById(req.getBookId());
-        if (b == null) {
-            throw new IllegalArgumentException("book not found: " + req.getBookId());
+
+        Long bookId = req.getBookId();
+
+        Book b;
+        if (bookId != null) {
+            b = bMapper.selectBookById(bookId);
+            if (b == null) throw new IllegalArgumentException("book not found: " + req.getBookId());
+        } else {
+            String isbn = req.getIsbn13Code();
+            if (isbn == null || isbn.isBlank()) {
+                throw new IllegalArgumentException("bookId or isbn13Code required");
+            }
+
+            if (bMapper.existsBookByIsbn13Code(isbn)) {
+                b = bMapper.selectBookByIsbn13Code(isbn);
+            } else {
+                b = new Book();
+                b.setIsbn13Code(isbn);
+                b.setTitle(req.getTitle());
+                b.setAuthor(req.getAuthor());
+                b.setPages(req.getPages());
+                b.setPublisher(req.getPublisher());
+//                b.setPubDate(req.getPubDate() != null ? req.getPubDate().format(DT) : null);
+                bMapper.insertBook(b); // keyProperty=bookId 세팅
+            }
+            bookId = b.getBookId();
         }
         if (sbMapper.existsBookshelfById(req.getBookshelfId(), req.getBookId())) {
             throw new IllegalArgumentException("already exists in shelf: bookId=" + req.getBookId());
@@ -64,13 +102,14 @@ public class ShelfItemServiceImpl implements ShelfItemService {
         ShelfItem si = new ShelfItem();
         si.setBookshelfId(req.getBookshelfId());
         si.setBookId(req.getBookId());
-        si.setSpineWidth(req.getSpineWidth());
         sbMapper.insertShelfItem(si);
 
         ShelfItemResponse r = new ShelfItemResponse();
         r.setShelfBookId(si.getShelfBookId());
         r.setBookshelfId(si.getBookshelfId());
         r.setBookId(si.getBookId());
+        r.setCurrentPage(si.getCurrentPage());
+        r.setReadingStatus(si.getReadingStatus());
         r.setTitle(b.getTitle());
         r.setAuthor(b.getAuthor());
         r.setPages(b.getPages());
@@ -84,8 +123,17 @@ public class ShelfItemServiceImpl implements ShelfItemService {
         if (current == null) {
             throw new IllegalArgumentException("shelf item not found: " + req.getShelfBookId());
         }
+
+        Integer cp = req.getCurrentPage();
+        if (cp != null) {
+            int max = current.getPages() != null ? Math.max(0, current.getPages()) : Integer.MAX_VALUE;
+            cp = Math.max(0, Math.min(cp, max));
+        }
+
         ShelfItem toUpdate = new ShelfItem();
         toUpdate.setShelfBookId(req.getShelfBookId());
+        toUpdate.setCurrentPage(cp);
+        toUpdate.setReadingStatus(req.getReadingStatus()); // null이면 미변경
         int updated = sbMapper.updateShelfItem(toUpdate);
         if (updated == 0) {
             throw new IllegalStateException("update failed: " + req.getShelfBookId());
@@ -98,12 +146,15 @@ public class ShelfItemServiceImpl implements ShelfItemService {
         r.setShelfBookId(fresh.getShelfBookId());
         r.setBookshelfId(fresh.getBookshelfId());
         r.setBookId(fresh.getBookId());
+        r.setCurrentPage(fresh.getCurrentPage());
+        r.setReadingStatus(fresh.getReadingStatus());
         if (b != null) {
             r.setTitle(b.getTitle());
             r.setAuthor(b.getAuthor());
             r.setPages(b.getPages());
         }
         r.setAddedDatetime(fresh.getAddedDatetime() != null ? fresh.getAddedDatetime().format(DT) : null);
+        r.setModifiedDatetime(fresh.getModifiedDatetime() != null ? fresh.getModifiedDatetime().format(DT) : null);
         return r;
     }
 

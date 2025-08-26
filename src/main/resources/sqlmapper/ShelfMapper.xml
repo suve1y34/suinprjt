@@ -1,0 +1,124 @@
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="co.kr.sikim.suinproject.mapper.ShelfMapper">
+    <resultMap id="ShelfItemMap" type="co.kr.sikim.suinproject.domain.ShelfItemJoinRow">
+        <id     column="shelf_book_id" property="shelfBookId"/>
+        <result column="bookshelf_id" property="bookshelfId"/>
+        <result column="book_id" property="bookId"/>
+        <result column="title" property="title"/>
+        <result column="author" property="author"/>
+        <result column="pages" property="pages"/>
+        <result column="current_page" property="currentPage"/>
+        <result column="reading_status" property="readingStatus"/>
+        <result column="added_datetime" property="addedDatetime"/>
+        <result column="modified_datetime" property="modifiedDatetime"/>
+    </resultMap>
+
+    <resultMap id="ShelfMap" type="co.kr.sikim.suinproject.domain.Bookshelf">
+        <id     column="bookshelf_id"        property="bookshelfId"/>
+        <result column="user_id"             property="userId"/>
+        <result column="created_datetime"    property="createdDatetime"/>
+    </resultMap>
+
+    <select id="selectBookshelfById" resultMap="ShelfMap">
+        SELECT bookshelf_id, user_id, created_datetime
+        FROM bookshelf bs
+        WHERE bs.user_id = #{userId}
+    </select>
+
+    <select id="countShelfItems" resultType="int">
+        SELECT
+        COUNT(*)
+        FROM
+        shelf_book
+        WHERE
+        bookshelf_id = #{bookshelfId}
+    </select>
+
+    <select id="existBookshelfById" resultType="boolean">
+        SELECT
+        EXISTS(
+        SELECT 1 FROM bookshelf WHERE bookshelf_id = #{bookshelfId}
+        )
+    </select>
+
+    <insert id="insertShelfItem" parameterType="co.kr.sikim.suinproject.domain.ShelfItem">
+        INSERT INTO shelf_book (bookshelf_id, book_id, current_page, reading_status)
+        VALUES (#{bookshelfId}, #{bookId}, #{currentPage,jdbcType=INTEGER}, #{readingStatus,jdbcType=VARCHAR})
+    </insert>
+
+    <update id="updateShelfItem" parameterType="co.kr.sikim.suinproject.domain.ShelfItem">
+        UPDATE shelf_book
+        <set>
+            <if test="currentPage != null">current_page = #{currentPage},</if>
+            <if test="readingStatus != null">reading_status = #{readingStatus}</if>
+        </set>
+
+        WHERE shelf_book_id = #{shelfBookId}
+    </update>
+
+    <delete id="deleteShelfItemById">
+        DELETE FROM shelf_book WHERE shelf_book_id = #{shelfBookId}
+    </delete>
+
+    <select id="existsBookshelfById" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1 FROM shelf_book
+            WHERE bookshelf_id = #{bookshelfId}
+            AND book_id = #{bookId}
+        )
+    </select>
+
+    <select id="countShelfItemsByBookshelfId" resultType="int">
+        SELECT
+            COUNT(*)
+        FROM
+            shelf_book
+        WHERE
+            bookshelf_id = #{bookshelfId}
+    </select>
+
+    <select id="selectShelfItemsByShelfId" resultMap="ShelfItemMap">
+        SELECT
+            sb.shelf_book_id,
+            sb.bookshelf_id,
+            sb.book_id,
+            sb.current_page,
+            sb.reading_status,
+            sb.added_datetime,
+            sb.modified_datetime,
+            b.title, b.author, b.pages
+        FROM
+            shelf_book sb
+        JOIN
+            book b
+        ON
+            b.book_id = sb.book_id
+        WHERE
+            sb.bookshelf_id = #{bookshelfId}
+        ORDER BY
+            shelf_book_id DESC
+    </select>
+
+    <select id="selectShelfItemById" resultMap="ShelfItemMap">
+        SELECT
+            sb.shelf_book_id,
+            sb.bookshelf_id,
+            sb.book_id,
+            sb.current_page,
+            sb.reading_status,
+            sb.added_datetime,
+            sb.modified_datetime,
+            b.title, b.author, b.pages
+        FROM
+            shelf_book sb
+        JOIN
+            book b
+        ON
+            b.book_id = sb.book_id
+        WHERE
+            sb.shelf_book_id = #{shelfBookId}
+    </select>
+</mapper>
