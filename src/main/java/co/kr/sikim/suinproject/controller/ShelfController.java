@@ -1,5 +1,6 @@
 package co.kr.sikim.suinproject.controller;
 
+import co.kr.sikim.suinproject.common.ApiResponse;
 import co.kr.sikim.suinproject.dto.shelf.BookshelfResponse;
 import co.kr.sikim.suinproject.dto.shelfitem.ShelfItemAddRequest;
 import co.kr.sikim.suinproject.dto.shelfitem.ShelfItemDeleteRequest;
@@ -10,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/shelves/books")
@@ -19,31 +21,32 @@ public class ShelfController {
     private final ShelfService siSer;
 
     @PostMapping("/me")
-    public BookshelfResponse getBookshelf(@RequestParam Long userId) {
-        return siSer.getShelf(userId);
+    public ApiResponse<BookshelfResponse> getBookshelf(@RequestParam Long userId) {
+        return ApiResponse.ok(siSer.getShelf(userId));
     }
 
     // 목록 조회
     @PostMapping("/list")
-    public List<ShelfItemResponse> listShelfItems(@RequestParam Long bookshelfId) {
-        return siSer.listShelfItems(bookshelfId);
+    public ApiResponse<List<ShelfItemResponse>> listShelfItems(@RequestParam Long bookshelfId) {
+        return ApiResponse.ok(siSer.listShelfItems(bookshelfId));
     }
 
     // 책 추가
     @PostMapping("/add")
-    public ShelfItemResponse createShelfItem(@RequestBody ShelfItemAddRequest req) {
-        return siSer.createShelfItem(req);
+    public ApiResponse<ShelfItemResponse> createShelfItem(@RequestBody ShelfItemAddRequest req) {
+        return ApiResponse.ok(siSer.createShelfItem(req));
     }
 
     // 책 수정
     @PostMapping("/update")
-    public ShelfItemResponse updateShelfItem(@RequestBody ShelfItemUpdateRequest req) {
-        return siSer.updateShelfItem(req);
+    public ApiResponse<ShelfItemResponse> updateShelfItem(@RequestBody ShelfItemUpdateRequest req) {
+        return ApiResponse.ok(siSer.updateShelfItem(req));
     }
 
     // 책 삭제
     @PostMapping("/remove")
-    public void deleteShelfItem(@RequestBody ShelfItemDeleteRequest req) {
+    public ApiResponse<Map<String, Boolean>> deleteShelfItem(@RequestBody ShelfItemDeleteRequest req) {
         siSer.deleteShelfItem(req);
+        return ApiResponse.ok(Map.of("success", true));
     }
 }

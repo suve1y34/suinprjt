@@ -1,0 +1,57 @@
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="co.kr.sikim.suinproject.mapper.ReadingNoteMapper">
+
+    <resultMap id="ReadingNoteMap" type="co.kr.sikim.suinproject.domain.ReadingNote">
+        <id     column="note_id"           property="noteId"/>
+        <result column="book_id"           property="bookId"/>
+        <result column="user_id"           property="userId"/>
+        <result column="content"           property="content"/>
+        <result column="rating"            property="rating"     jdbcType="TINYINT"/>
+        <result column="created_datetime"  property="createdDatetime"  jdbcType="TIMESTAMP"/>
+        <result column="modified_datetime" property="modifiedDatetime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <select id="selectReadingNotesByBookId" parameterType="long" resultMap="ReadingNoteMap">
+        SELECT
+            note_id, book_id, user_id, content, rating, created_datetime, modified_datetime
+        FROM
+            reading_note
+        WHERE
+            book_id = #{bookId}
+        ORDER BY
+            note_id DESC
+    </select>
+
+    <select id="selectReadingNoteById" parameterType="long" resultMap="ReadingNoteMap">
+        SELECT
+            note_id, book_id, user_id, content, rating, created_datetime, modified_datetime
+        FROM
+            reading_note
+        WHERE
+            note_id = #{noteId}
+    </select>
+
+    <insert id="insertReadingNote" parameterType="co.kr.sikim.suinproject.domain.ReadingNote"
+            useGeneratedKeys="true" keyProperty="noteId">
+        INSERT INTO reading_note (book_id, user_id, content, rating)
+        VALUES (#{bookId}, #{userId}, #{content}, #{rating})
+    </insert>
+
+    <update id="updateReadingNote" parameterType="co.kr.sikim.suinproject.domain.ReadingNote">
+        UPDATE reading_note
+        SET content = #{content},
+        rating  = #{rating}
+        WHERE note_id = #{noteId}
+    </update>
+
+    <delete id="deleteReadingNoteById" parameterType="long">
+        DELETE FROM reading_note WHERE note_id = #{noteId}
+    </delete>
+
+    <select id="selectNoteOwnerUserId" parameterType="long" resultType="long">
+        SELECT user_id FROM reading_note WHERE note_id = #{noteId}
+    </select>
+</mapper>
