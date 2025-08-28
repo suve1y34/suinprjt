@@ -124,16 +124,34 @@ public class ShelfServiceImpl implements ShelfService {
             throw new IllegalArgumentException("shelf item not found: " + req.getShelfBookId());
         }
 
+        // 1) 페이지 클램프
         Integer cp = req.getCurrentPage();
         if (cp != null) {
             int max = current.getPages() != null ? Math.max(0, current.getPages()) : Integer.MAX_VALUE;
             cp = Math.max(0, Math.min(cp, max));
         }
 
+        // 2) 상태 결정
+        String status = req.getReadingStatus(); // null 아니면 지정된대로 적용
+        if (status == null && cp != null) {
+            if (current.getPages() != null) {
+                int pages = Math.max(0, current.getPages());
+                if (cp <= 0) status = "PLAN"; // 0페이지면 읽을예정상태
+                else if (cp >= pages && pages > 0) status = "DONE";
+                else status = "READING";
+            } else {
+                status = (cp <= 0) ? "PLAN" : "READING";
+            }
+        }
+        if (status != null && !status.matches("PLAN|READING|DONE")) {
+            throw new IllegalArgumentException(("invalid readingStatus"));
+        }
+
+        // 3) 업데이트
         ShelfItem toUpdate = new ShelfItem();
         toUpdate.setShelfBookId(req.getShelfBookId());
         toUpdate.setCurrentPage(cp);
-        toUpdate.setReadingStatus(req.getReadingStatus()); // null이면 미변경
+        toUpdate.setReadingStatus(status); // null이면 미변경
         int updated = sbMapper.updateShelfItem(toUpdate);
         if (updated == 0) {
             throw new IllegalStateException("update failed: " + req.getShelfBookId());
