@@ -10,4 +10,6 @@ public interface AladinCacheMapper {
     boolean existAladinCacheByIsbn13Code(@Param("isbn13Code") String isbn13Code);
     int insertAladinCache(AladinCache cache);
     int updateAladinCache(AladinCache cache);
+    int upsertAladinCache(@Param("isbn13Code") String isbn13Code,
+                          @Param("rawJson") String rawJson);
 }

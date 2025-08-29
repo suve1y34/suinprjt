@@ -34,6 +34,7 @@ public class ShelfController {
     // 책 추가
     @PostMapping("/add")
     public ApiResponse<ShelfItemResponse> createShelfItem(@RequestBody ShelfItemAddRequest req) {
+        System.out.println(req.getBookshelfId());
         return ApiResponse.ok(siSer.createShelfItem(req));
     }
 

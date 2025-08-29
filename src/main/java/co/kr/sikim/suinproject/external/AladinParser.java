@@ -22,33 +22,36 @@ public class AladinParser {
     public List<AladinBookResponse> parseSearch(String rawJson) {
         try {
             JsonNode root = om.readTree(rawJson);
+
+            // 에러 우선 처리
+            if (root.hasNonNull("errorCode")) {
+                String code = root.path("errorCode").asText();
+                String msg = root.path("errorMessage").asText("Unknown error");
+                throw new IllegalStateException("Aladin error " + code + ": " + msg);
+            }
+
             JsonNode items = root.get("item");
             if (items == null || !items.isArray() || items.size() == 0) {
                 return Collections.emptyList();
             }
+
             List<AladinBookResponse> result = new ArrayList<>();
             for (JsonNode it : items) {
                 String isbn13 = getText(it, "isbn13");
                 String title = getText(it, "title");
                 String author = getText(it, "author");
                 String publisher = getText(it, "publisher");
-                String pubDateRaw = firstNonEmpty(getText(it, "pubDateStr"));
 
-                Integer pages = null;
-                if (it.hasNonNull("page")) {
-                    pages = it.get("page").asInt();
-                } else if (it.hasNonNull("subInfo") && it.get("subInfo").hasNonNull("itemPage")) {
-                    pages = it.get("subInfo").get("itemPage").asInt();
-                }
-
-                // 알라딘 에러 형식 처리
-                if (root.hasNonNull("errorCode")) {
-                    String code = root.get("errorCode").asText();
-                    String msg  = root.hasNonNull("errorMessage") ? root.get("errorMessage").asText() : "Unknown error";
-                    throw new IllegalStateException("Aladin error " + code + ": " + msg);
-                }
-
+                // 날짜: pubDate 또는 pubDateStr
+                String pubDateRaw = firstNonEmpty(getText(it, "pubDate"), getText(it, "pubDateStr"));
                 String pubDate = normalizeDate(pubDateRaw);
+
+                Integer pages = readInt(it.path("itemPage"));
+                if (pages == null) {
+                    JsonNode sub = it.path("subInfo");
+                    if (sub.isObject()) pages = readInt(sub.path("itemPage"));
+                }
+                if (pages == null) pages = readInt(it.path("page"));
 
                 result.add(new AladinBookResponse(
                         isbn13, title, author, pages, publisher, pubDate
@@ -77,6 +80,15 @@ public class AladinParser {
                 LocalDate d = LocalDate.parse(raw, f);
                 return d.toString();
             } catch (Exception ignored) {}
+        }
+        return null;
+    }
+
+    private Integer readInt(JsonNode n) {
+        if (n == null || n.isNull()) return null;
+        if (n.isInt()) return n.asInt();
+        if (n.isTextual()) {
+            try { return Integer.parseInt(n.asText().trim()); } catch (Exception ignore) {}
         }
         return null;
     }

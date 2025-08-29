@@ -9,7 +9,9 @@ import java.math.BigDecimal;
 @Setter
 public class ShelfItemAddRequest {
     private Long bookshelfId;
+
     private Long bookId;
+
     private String isbn13Code;
 
     private String title;
@@ -19,4 +21,5 @@ public class ShelfItemAddRequest {
     private String pubDate;
 
     private String readingStatus;
+    private Integer currentPage;
 }

@@ -58,7 +58,7 @@
     </select>
 
     <insert id="insertBook" parameterType="co.kr.sikim.suinproject.domain.Book"
-            useGeneratedKeys="true" keyProperty="bookId">
+            useGeneratedKeys="true" keyProperty="bookId" keyColumn="book_id">
         INSERT INTO book (isbn13_code, title, author, pages, publisher, pub_date)
         VALUES (#{isbn13Code}, #{title}, #{author}, #{pages}, #{publisher}, #{pubDate})
     </insert>

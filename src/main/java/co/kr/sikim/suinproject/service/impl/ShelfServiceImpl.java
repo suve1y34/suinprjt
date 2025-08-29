@@ -11,6 +11,7 @@ import co.kr.sikim.suinproject.dto.shelfitem.ShelfItemDeleteRequest;
 import co.kr.sikim.suinproject.dto.shelfitem.ShelfItemUpdateRequest;
 import co.kr.sikim.suinproject.mapper.BookMapper;
 import co.kr.sikim.suinproject.mapper.ShelfMapper;
+import co.kr.sikim.suinproject.service.BookInternalService;
 import co.kr.sikim.suinproject.service.ShelfService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,12 +19,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
 public class ShelfServiceImpl implements ShelfService {
     private final ShelfMapper sbMapper;
     private final BookMapper bMapper;
+    private final BookInternalService biService;
 
     private static final DateTimeFormatter DT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -68,51 +71,51 @@ public class ShelfServiceImpl implements ShelfService {
         if (!sbMapper.existBookshelfById(req.getBookshelfId())) {
             throw new IllegalArgumentException("bookshelf not found: " + req.getBookshelfId());
         }
-
-        Long bookId = req.getBookId();
-
-        Book b;
-        if (bookId != null) {
-            b = bMapper.selectBookById(bookId);
-            if (b == null) throw new IllegalArgumentException("book not found: " + req.getBookId());
-        } else {
-            String isbn = req.getIsbn13Code();
-            if (isbn == null || isbn.isBlank()) {
-                throw new IllegalArgumentException("bookId or isbn13Code required");
-            }
-
-            if (bMapper.existsBookByIsbn13Code(isbn)) {
-                b = bMapper.selectBookByIsbn13Code(isbn);
-            } else {
-                b = new Book();
-                b.setIsbn13Code(isbn);
-                b.setTitle(req.getTitle());
-                b.setAuthor(req.getAuthor());
-                b.setPages(req.getPages());
-                b.setPublisher(req.getPublisher());
-//                b.setPubDate(req.getPubDate() != null ? req.getPubDate().format(DT) : null);
-                bMapper.insertBook(b); // keyProperty=bookId 세팅
-            }
-            bookId = b.getBookId();
+        if (!sbMapper.existBookshelfById(req.getBookshelfId())) {
+            throw new IllegalArgumentException("bookshelf not found: " + req.getBookshelfId());
         }
-        if (sbMapper.existsBookshelfById(req.getBookshelfId(), req.getBookId())) {
+
+        Long bookId;
+        Book ensuredBook;
+
+        if (req.getBookId() != null) {
+            ensuredBook = bMapper.selectBookById(req.getBookId());
+            if (ensuredBook == null) throw new IllegalArgumentException("book not found: " + req.getBookId());
+            bookId = ensuredBook.getBookId();
+        } else if(req.getIsbn13Code() != null && !req.getIsbn13Code().isBlank()) {
+            ensuredBook = biService.upsertByIsbn13AndFillPagesIfMissing(
+                    req.getIsbn13Code(), req.getTitle(), req.getAuthor(), req.getPages(),
+                    req.getPublisher(), req.getPubDate()
+            );
+            bookId = ensuredBook.getBookId();
+        } else {
+            throw new IllegalArgumentException("bookId or isbn13Code is required");
+        }
+        if (sbMapper.existsBookshelfById(req.getBookshelfId(), bookId)) {
             throw new IllegalArgumentException("already exists in shelf: bookId=" + req.getBookId());
         }
 
+        Integer pages = ensuredBook.getPages(); // null 가능
+        int currentPage = clamp(req.getCurrentPage(), 0, pages);
+        String readingStatus = normalizeStatus(req.getReadingStatus(), currentPage, pages);
+
+
         ShelfItem si = new ShelfItem();
         si.setBookshelfId(req.getBookshelfId());
-        si.setBookId(req.getBookId());
+        si.setBookId(bookId);
+        si.setCurrentPage(currentPage);
+        si.setReadingStatus(readingStatus);
         sbMapper.insertShelfItem(si);
 
         ShelfItemResponse r = new ShelfItemResponse();
         r.setShelfBookId(si.getShelfBookId());
         r.setBookshelfId(si.getBookshelfId());
-        r.setBookId(si.getBookId());
-        r.setCurrentPage(si.getCurrentPage());
-        r.setReadingStatus(si.getReadingStatus());
-        r.setTitle(b.getTitle());
-        r.setAuthor(b.getAuthor());
-        r.setPages(b.getPages());
+        r.setBookId(bookId);
+        r.setTitle(ensuredBook.getTitle());
+        r.setAuthor(ensuredBook.getAuthor());
+        r.setPages(ensuredBook.getPages());
+        r.setCurrentPage(currentPage);
+        r.setReadingStatus(readingStatus);
         return r;
     }
 
@@ -124,34 +127,20 @@ public class ShelfServiceImpl implements ShelfService {
             throw new IllegalArgumentException("shelf item not found: " + req.getShelfBookId());
         }
 
-        // 1) 페이지 클램프
-        Integer cp = req.getCurrentPage();
-        if (cp != null) {
-            int max = current.getPages() != null ? Math.max(0, current.getPages()) : Integer.MAX_VALUE;
-            cp = Math.max(0, Math.min(cp, max));
+        Book b = bMapper.selectBookById(current.getBookId());
+        Integer pages = b != null ? b.getPages() : null;
+
+        Integer nextPage = req.getCurrentPage() != null ? clamp(req.getCurrentPage(), 0, pages) : current.getCurrentPage();
+        String nextStatus = req.getReadingStatus();
+        if (nextStatus == null || nextStatus.isBlank()) {
+            nextStatus = normalizeStatus(current.getReadingStatus(), nextPage, pages);
         }
 
-        // 2) 상태 결정
-        String status = req.getReadingStatus(); // null 아니면 지정된대로 적용
-        if (status == null && cp != null) {
-            if (current.getPages() != null) {
-                int pages = Math.max(0, current.getPages());
-                if (cp <= 0) status = "PLAN"; // 0페이지면 읽을예정상태
-                else if (cp >= pages && pages > 0) status = "DONE";
-                else status = "READING";
-            } else {
-                status = (cp <= 0) ? "PLAN" : "READING";
-            }
-        }
-        if (status != null && !status.matches("PLAN|READING|DONE")) {
-            throw new IllegalArgumentException(("invalid readingStatus"));
-        }
-
-        // 3) 업데이트
         ShelfItem toUpdate = new ShelfItem();
         toUpdate.setShelfBookId(req.getShelfBookId());
-        toUpdate.setCurrentPage(cp);
-        toUpdate.setReadingStatus(status); // null이면 미변경
+        toUpdate.setCurrentPage(nextPage);
+        toUpdate.setReadingStatus(nextStatus); // null이면 미변경
+
         int updated = sbMapper.updateShelfItem(toUpdate);
         if (updated == 0) {
             throw new IllegalStateException("update failed: " + req.getShelfBookId());
@@ -159,20 +148,16 @@ public class ShelfServiceImpl implements ShelfService {
 
         // 갱신 후 응답용 조회 + Book 조인
         ShelfItemJoinRow fresh = sbMapper.selectShelfItemById(req.getShelfBookId());
-        Book b = bMapper.selectBookById(fresh.getBookId());
         ShelfItemResponse r = new ShelfItemResponse();
         r.setShelfBookId(fresh.getShelfBookId());
         r.setBookshelfId(fresh.getBookshelfId());
         r.setBookId(fresh.getBookId());
+        r.setTitle(fresh.getTitle());
+        r.setAuthor(fresh.getAuthor());
+        r.setPages(fresh.getPages());
         r.setCurrentPage(fresh.getCurrentPage());
         r.setReadingStatus(fresh.getReadingStatus());
-        if (b != null) {
-            r.setTitle(b.getTitle());
-            r.setAuthor(b.getAuthor());
-            r.setPages(b.getPages());
-        }
         r.setAddedDatetime(fresh.getAddedDatetime() != null ? fresh.getAddedDatetime().format(DT) : null);
-        r.setModifiedDatetime(fresh.getModifiedDatetime() != null ? fresh.getModifiedDatetime().format(DT) : null);
         return r;
     }
 
@@ -182,6 +167,30 @@ public class ShelfServiceImpl implements ShelfService {
         int deleted = sbMapper.deleteShelfItemById(req.getShelfBookId());
         if (deleted == 0) {
             throw new IllegalArgumentException("shelf item not found: " + req.getShelfBookId());
+        }
+    }
+
+    private int clamp(Integer v, int min, Integer maxNullable) {
+        int x = v == null ? 0 : v;
+        if (x < min) return min;
+        if (maxNullable != null && x > maxNullable) return maxNullable;
+        return x;
+    }
+
+    private String normalizeStatus(String status, int currentPage, Integer pages) {
+        String s = (status == null || status.isBlank()) ? "PLAN" : status.trim().toUpperCase();
+        if (Objects.equals(s, "PLAN") || Objects.equals(s, "READING") || Objects.equals(s, "DONE")) {
+            // 입력이 유효하면 그대로 쓰되, 미지정/잘못된 경우는 진행도 기반 자동 전이
+            return s;
+        }
+        // 자동 전이
+        if (pages != null) {
+            if (currentPage >= pages) return "DONE";
+            if (currentPage > 0) return "READING";
+            return "PLAN";
+        } else {
+            // 총 페이지를 모르면 0이면 PLAN, >0이면 READING 가정
+            return currentPage > 0 ? "READING" : "PLAN";
         }
     }
 }

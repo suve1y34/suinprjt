@@ -46,7 +46,12 @@
 
     <insert id="insertShelfItem" parameterType="co.kr.sikim.suinproject.domain.ShelfItem">
         INSERT INTO shelf_book (bookshelf_id, book_id, current_page, reading_status)
-        VALUES (#{bookshelfId}, #{bookId}, #{currentPage,jdbcType=INTEGER}, #{readingStatus,jdbcType=VARCHAR})
+        VALUES (
+        #{bookshelfId},
+        #{bookId},
+        COALESCE(#{currentPage}, 0),
+        COALESCE(#{readingStatus}, 'PLAN')
+        )
     </insert>
 
     <update id="updateShelfItem" parameterType="co.kr.sikim.suinproject.domain.ShelfItem">
