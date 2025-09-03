@@ -10,4 +10,6 @@ public class UserResponse {
     private String userName;
     private String email;
     private String nickname;
+    private String createdDatetime;
+    private String modifiedDatetime;
 }
