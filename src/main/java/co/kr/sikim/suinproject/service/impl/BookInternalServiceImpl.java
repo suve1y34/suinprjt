@@ -5,13 +5,23 @@ import co.kr.sikim.suinproject.external.AladinClient;
 import co.kr.sikim.suinproject.mapper.AladinCacheMapper;
 import co.kr.sikim.suinproject.mapper.BookMapper;
 import co.kr.sikim.suinproject.service.BookInternalService;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Service
 public class BookInternalServiceImpl implements BookInternalService {
 
     private final BookMapper bMapper;
     private final AladinClient aladinClient;
     private final AladinCacheMapper cMapper;
+
+    public BookInternalServiceImpl(BookMapper bMapper,
+                                   AladinClient aladinClient,
+                                   AladinCacheMapper cMapper) {
+        this.bMapper = bMapper;
+        this.aladinClient = aladinClient;
+        this.cMapper = cMapper;
+    }
 
     @Transactional
     @Override

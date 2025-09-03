@@ -22,4 +22,6 @@ public class ShelfItemAddRequest {
 
     private String readingStatus;
     private Integer currentPage;
+
+    private String memo;
 }

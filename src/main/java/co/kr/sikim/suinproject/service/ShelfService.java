@@ -12,6 +12,7 @@ public interface ShelfService {
     BookshelfResponse getShelf(Long userId);
     ShelfItemResponse createShelfItem(ShelfItemAddRequest req);
     ShelfItemResponse updateShelfItem(ShelfItemUpdateRequest req);
+    ShelfItemResponse updateShelfItemMemo(Long shelfBookId, String memo, Long userId);
     void deleteShelfItem(ShelfItemDeleteRequest req);
     List<ShelfItemResponse> listShelfItems(Long bookShelfId);
 }

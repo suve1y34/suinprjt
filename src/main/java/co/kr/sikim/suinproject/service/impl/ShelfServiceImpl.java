@@ -60,7 +60,11 @@ public class ShelfServiceImpl implements ShelfService {
             r.setTitle(si.getTitle());
             r.setAuthor(si.getAuthor());
             r.setPages(si.getPages());
+            r.setCurrentPage(si.getCurrentPage());
+            r.setReadingStatus(si.getReadingStatus());
             r.setAddedDatetime(si.getAddedDatetime() != null ? si.getAddedDatetime().format(DT) : null);
+            r.setModifiedDatetime(si.getModifiedDatetime() != null ? si.getModifiedDatetime().format(DT) : null);
+            r.setMemo(si.getMemo());
             return r;
         }).toList();
     }
@@ -105,6 +109,7 @@ public class ShelfServiceImpl implements ShelfService {
         si.setBookId(bookId);
         si.setCurrentPage(currentPage);
         si.setReadingStatus(readingStatus);
+        si.setMemo(req.getMemo());
         sbMapper.insertShelfItem(si);
 
         ShelfItemResponse r = new ShelfItemResponse();
@@ -116,6 +121,7 @@ public class ShelfServiceImpl implements ShelfService {
         r.setPages(ensuredBook.getPages());
         r.setCurrentPage(currentPage);
         r.setReadingStatus(readingStatus);
+        r.setMemo(req.getMemo());
         return r;
     }
 
@@ -158,6 +164,34 @@ public class ShelfServiceImpl implements ShelfService {
         r.setCurrentPage(fresh.getCurrentPage());
         r.setReadingStatus(fresh.getReadingStatus());
         r.setAddedDatetime(fresh.getAddedDatetime() != null ? fresh.getAddedDatetime().format(DT) : null);
+        return r;
+    }
+
+    @Override
+    public ShelfItemResponse updateShelfItemMemo(Long shelfBookId, String memo, Long userId) {
+        ShelfItemJoinRow current = sbMapper.selectShelfItemById(shelfBookId);
+        if (current == null) {
+            throw new IllegalArgumentException("update meno failed: " + shelfBookId);
+        }
+
+        int updated = sbMapper.updateShelfBookMemo(shelfBookId, memo);
+        if (updated == 0) {
+            throw new IllegalStateException("update memo failed: " + shelfBookId);
+        }
+
+        ShelfItemJoinRow fresh = sbMapper.selectShelfItemById(shelfBookId);
+        ShelfItemResponse r = new ShelfItemResponse();
+        r.setShelfBookId(fresh.getShelfBookId());
+        r.setBookshelfId(fresh.getBookshelfId());
+        r.setBookId(fresh.getBookId());
+        r.setTitle(fresh.getTitle());
+        r.setAuthor(fresh.getAuthor());
+        r.setPages(fresh.getPages());
+        r.setCurrentPage(fresh.getCurrentPage());
+        r.setReadingStatus(fresh.getReadingStatus());
+        r.setMemo(fresh.getMemo()); // ← 변경된 memo
+        r.setAddedDatetime(fresh.getAddedDatetime() != null ? fresh.getAddedDatetime().format(DT) : null);
+        r.setModifiedDatetime(fresh.getModifiedDatetime() != null ? fresh.getModifiedDatetime().format(DT) : null);
         return r;
     }
 

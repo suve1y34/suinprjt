@@ -12,6 +12,7 @@
         <result column="pages" property="pages"/>
         <result column="current_page" property="currentPage"/>
         <result column="reading_status" property="readingStatus"/>
+        <result column="memo" property="memo"/>
         <result column="added_datetime" property="addedDatetime"/>
         <result column="modified_datetime" property="modifiedDatetime"/>
     </resultMap>
@@ -64,6 +65,12 @@
         WHERE shelf_book_id = #{shelfBookId}
     </update>
 
+    <update id="updateShelfBookMemo">
+        UPDATE shelf_book
+        SET memo = #{memo}
+        WHERE shelf_book_id = #{shelfBookId}
+    </update>
+
     <delete id="deleteShelfItemById">
         DELETE FROM shelf_book WHERE shelf_book_id = #{shelfBookId}
     </delete>
@@ -92,6 +99,7 @@
             sb.book_id,
             sb.current_page,
             sb.reading_status,
+            sb.memo,
             sb.added_datetime,
             sb.modified_datetime,
             b.title, b.author, b.pages
@@ -114,6 +122,7 @@
             sb.book_id,
             sb.current_page,
             sb.reading_status,
+            sb.memo,
             sb.added_datetime,
             sb.modified_datetime,
             b.title, b.author, b.pages

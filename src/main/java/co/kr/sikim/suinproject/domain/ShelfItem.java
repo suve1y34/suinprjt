@@ -12,4 +12,5 @@ public class ShelfItem {
     private Long bookId;
     private Integer currentPage;
     private String readingStatus;
+    private String memo;
 }

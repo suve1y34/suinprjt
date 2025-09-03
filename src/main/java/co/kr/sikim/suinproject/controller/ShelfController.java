@@ -7,6 +7,7 @@ import co.kr.sikim.suinproject.dto.shelfitem.ShelfItemDeleteRequest;
 import co.kr.sikim.suinproject.dto.shelfitem.ShelfItemResponse;
 import co.kr.sikim.suinproject.dto.shelfitem.ShelfItemUpdateRequest;
 import co.kr.sikim.suinproject.service.ShelfService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -42,6 +43,14 @@ public class ShelfController {
     @PostMapping("/update")
     public ApiResponse<ShelfItemResponse> updateShelfItem(@RequestBody ShelfItemUpdateRequest req) {
         return ApiResponse.ok(siSer.updateShelfItem(req));
+    }
+
+    // 책 메모 수정
+    @PostMapping("/updateMemo")
+    public ApiResponse<ShelfItemResponse> updateShelfItemMemo(@RequestParam Long shelfBookId,
+                                                              @RequestParam(required = false) String memo,
+                                                              @RequestParam Long userId) {
+        return ApiResponse.ok(siSer.updateShelfItemMemo(shelfBookId, memo, userId));
     }
 
     // 책 삭제

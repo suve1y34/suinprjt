@@ -16,4 +16,5 @@ public class ShelfItemResponse {
     private String readingStatus;
     private String addedDatetime;
     private String modifiedDatetime;
+    private String memo;
 }
