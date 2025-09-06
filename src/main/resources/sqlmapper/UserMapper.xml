@@ -26,6 +26,14 @@
         FROM `user` WHERE user_email = #{userEmail}
     </select>
 
+    <select id="existsUserByNicknameAndNotUserId" resultType="boolean">
+        SELECT EXISTS(
+        SELECT 1 FROM user
+        WHERE nickname = #{nickname}
+        AND user_id != #{userId}
+        )
+    </select>
+
     <insert id="insertUser" parameterType="co.kr.sikim.suinproject.domain.User" useGeneratedKeys="true" keyProperty="userId">
         INSERT INTO `user`
         (user_email, user_password, user_name, nickname)
@@ -34,11 +42,33 @@
     </insert>
 
     <update id="updateUser" parameterType="co.kr.sikim.suinproject.domain.User">
-        UPDATE `user`
-        SET user_email = #{userEmail},
-        user_name  = #{userName},
-        nickname   = #{nickname}
-        WHERE user_id = #{userId}
+        UPDATE
+            `user`
+        SET
+            nickname   = #{nickname},
+            modified_datetime = CURRENT_TIMESTAMP
+        WHERE
+            user_id = #{userId}
+    </update>
+
+    <update id="updateUserPasswordById">
+        UPDATE
+            `user`
+        SET
+            user_password = #{userPasswordHash},
+            modified_datetime = CURRENT_TIMESTAMP
+        WHERE
+            user_id = #{userId}
+    </update>
+
+    <update id="updateUserMustChangePasswordFlagById">
+        UPDATE
+            `user`
+        SET
+            must_change_password = #{mustChange},
+            modified_datetime = CURRENT_TIMESTAMP
+        WHERE
+            user_id = #{userId}
     </update>
 
     <delete id="deleteUserById" parameterType="long">

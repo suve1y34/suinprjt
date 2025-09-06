@@ -3,14 +3,12 @@ package co.kr.sikim.suinproject.controller;
 import co.kr.sikim.suinproject.common.ApiResponse;
 import co.kr.sikim.suinproject.domain.User;
 import co.kr.sikim.suinproject.dto.auth.UserResponse;
+import co.kr.sikim.suinproject.dto.auth.UserUpdateRequest;
 import co.kr.sikim.suinproject.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.format.DateTimeFormatter;
 
@@ -40,5 +38,13 @@ public class UserController {
         r.setNickname(u.getNickname());
 
         return ApiResponse.ok(r);
+    }
+
+    @PutMapping("/me")
+    public ApiResponse<UserResponse> updateMe(@RequestBody UserUpdateRequest req) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || auth.getPrincipal() == null) throw new SecurityException("unauthorized");
+        Long userId = (auth.getPrincipal() instanceof Long) ? (Long) auth.getPrincipal() : Long.valueOf(String.valueOf(auth.getPrincipal()));
+        return ApiResponse.ok(uSer.updateUser(userId, req));
     }
 }
