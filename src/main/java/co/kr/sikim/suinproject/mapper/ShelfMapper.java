@@ -14,6 +14,8 @@ public interface ShelfMapper {
     Integer countShelfItems(@Param("bookshelfId") Long bookshelfId);
     boolean existBookshelfById(@Param("bookshelfId") Long bookshelfId);
 
+    int insertBookshelf(Bookshelf bookshelf); // 책장 생성
+
     int insertShelfItem(ShelfItem item); // 독서 등록
     int updateShelfItem(ShelfItem item); // 독서 수정
     int updateShelfBookMemo(@Param("shelfBookId") Long shelfBookId, @Param("memo") String memo);

@@ -3,6 +3,8 @@ package co.kr.sikim.suinproject.controller;
 import co.kr.sikim.suinproject.common.ApiResponse;
 import co.kr.sikim.suinproject.dto.auth.AuthLoginRequest;
 import co.kr.sikim.suinproject.dto.auth.AuthLoginResponse;
+import co.kr.sikim.suinproject.dto.auth.RegisterRequest;
+import co.kr.sikim.suinproject.dto.auth.UserResponse;
 import co.kr.sikim.suinproject.service.AuthService;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -42,5 +44,10 @@ public class AuthController {
 
         authSer.resetPassword(userId);
         return ApiResponse.ok(Map.of("success", true));
+    }
+
+    @PostMapping("/register")
+    public ApiResponse<UserResponse> register(@RequestBody RegisterRequest req) {
+        return ApiResponse.ok(authSer.createUser(req));
     }
 }

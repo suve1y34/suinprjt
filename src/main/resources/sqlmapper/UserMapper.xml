@@ -26,11 +26,20 @@
         FROM `user` WHERE user_email = #{userEmail}
     </select>
 
+    <select id="existsUserByNickname" parameterType="string" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1
+            FROM `user`
+            WHERE nickname = #{nickname}
+        )
+    </select>
+
     <select id="existsUserByNicknameAndNotUserId" resultType="boolean">
         SELECT EXISTS(
-        SELECT 1 FROM user
-        WHERE nickname = #{nickname}
-        AND user_id != #{userId}
+            SELECT 1
+            FROM `user`
+            WHERE nickname = #{nickname}
+            AND user_id != #{userId}
         )
     </select>
 

@@ -45,6 +45,11 @@
         )
     </select>
 
+    <insert id="insertBookshelf" parameterType="co.kr.sikim.suinproject.domain.Bookshelf"
+            useGeneratedKeys="true" keyProperty="bookshelfId">
+        INSERT INTO bookshelf (user_id) VALUES (#{userId})
+    </insert>
+
     <insert id="insertShelfItem" parameterType="co.kr.sikim.suinproject.domain.ShelfItem">
         INSERT INTO shelf_book (bookshelf_id, book_id, current_page, reading_status)
         VALUES (
