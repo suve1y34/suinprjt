@@ -16,7 +16,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.UUID;
 
 @Service
 public class AuthServiceImpl implements AuthService {
@@ -113,5 +115,30 @@ public class AuthServiceImpl implements AuthService {
         dto.setCreatedDatetime(saved.getCreatedDatetime() != null ? DF.format(saved.getCreatedDatetime()) : null);
         dto.setModifiedDatetime(saved.getModifiedDatetime() != null ? DF.format(saved.getModifiedDatetime()) : null);
         return dto;
+    }
+
+    @Transactional
+    @Override
+    public User upsertOAuthUser(String email, String name) {
+        User existing = uMapper.selectUserByEmail(email);
+        if (existing != null) return existing;
+
+        User u = new User();
+        u.setUserEmail(email);
+        u.setUserPassword(pwEncoder.encode("OAUTH2-" + UUID.randomUUID()));
+        u.setUserName((name == null || name.isBlank()) ? email : name);
+        u.setNickname(null);
+        u.setCreatedDatetime(LocalDateTime.now());
+        u.setModifiedDatetime(LocalDateTime.now());
+        uMapper.insertUser(u);
+
+        Bookshelf shelf = new Bookshelf();
+        shelf.setUserId(u.getUserId());
+        int s = sMapper.insertBookshelf(shelf);
+        if (s != 1 || shelf.getBookshelfId() == null) {
+            throw new IllegalStateException("failed to create default bookshelf");
+        }
+
+        return u;
     }
 }

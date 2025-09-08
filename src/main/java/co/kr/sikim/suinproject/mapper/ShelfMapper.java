@@ -18,7 +18,6 @@ public interface ShelfMapper {
 
     int insertShelfItem(ShelfItem item); // 독서 등록
     int updateShelfItem(ShelfItem item); // 독서 수정
-    int updateShelfBookMemo(@Param("shelfBookId") Long shelfBookId, @Param("memo") String memo);
     int deleteShelfItemById(@Param("shelfBookId") Long shelfBookId); // 독서 삭제
 
     boolean existsBookshelfById(@Param("bookshelfId") Long bookshelfId, @Param("bookId") Long bookId); // 책장에 책 존재 여부

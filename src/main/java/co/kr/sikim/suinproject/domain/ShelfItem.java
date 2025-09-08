@@ -13,4 +13,6 @@ public class ShelfItem {
     private Integer currentPage;
     private String readingStatus;
     private String memo;
+    // Mapper 동적 세팅 제어용
+    private Boolean memoChanged;
 }

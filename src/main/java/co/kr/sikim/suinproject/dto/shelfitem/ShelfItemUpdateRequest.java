@@ -13,4 +13,8 @@ public class ShelfItemUpdateRequest {
     private Integer currentPage;
     // 도서 상태 (null이면 변경x)
     private String readingStatus;
+    
+    // 메모 수정여부
+    private Boolean memoChanged;
+    private String memo;
 }

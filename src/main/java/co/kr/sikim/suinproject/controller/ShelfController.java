@@ -45,14 +45,6 @@ public class ShelfController {
         return ApiResponse.ok(siSer.updateShelfItem(req));
     }
 
-    // 책 메모 수정
-    @PostMapping("/updateMemo")
-    public ApiResponse<ShelfItemResponse> updateShelfItemMemo(@RequestParam Long shelfBookId,
-                                                              @RequestParam(required = false) String memo,
-                                                              @RequestParam Long userId) {
-        return ApiResponse.ok(siSer.updateShelfItemMemo(shelfBookId, memo, userId));
-    }
-
     // 책 삭제
     @PostMapping("/remove")
     public ApiResponse<Map<String, Boolean>> deleteShelfItem(@RequestBody ShelfItemDeleteRequest req) {

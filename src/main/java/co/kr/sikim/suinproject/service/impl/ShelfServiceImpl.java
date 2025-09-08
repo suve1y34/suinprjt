@@ -147,6 +147,13 @@ public class ShelfServiceImpl implements ShelfService {
         toUpdate.setCurrentPage(nextPage);
         toUpdate.setReadingStatus(nextStatus); // null이면 미변경
 
+        if (Boolean.TRUE.equals(req.getMemoChanged())) {
+            toUpdate.setMemo(req.getMemo()); // null이면 비우기
+            toUpdate.setMemoChanged(true);
+        } else {
+            toUpdate.setMemoChanged(false);
+        }
+
         int updated = sbMapper.updateShelfItem(toUpdate);
         if (updated == 0) {
             throw new IllegalStateException("update failed: " + req.getShelfBookId());
@@ -164,34 +171,6 @@ public class ShelfServiceImpl implements ShelfService {
         r.setCurrentPage(fresh.getCurrentPage());
         r.setReadingStatus(fresh.getReadingStatus());
         r.setAddedDatetime(fresh.getAddedDatetime() != null ? fresh.getAddedDatetime().format(DT) : null);
-        return r;
-    }
-
-    @Override
-    public ShelfItemResponse updateShelfItemMemo(Long shelfBookId, String memo, Long userId) {
-        ShelfItemJoinRow current = sbMapper.selectShelfItemById(shelfBookId);
-        if (current == null) {
-            throw new IllegalArgumentException("update meno failed: " + shelfBookId);
-        }
-
-        int updated = sbMapper.updateShelfBookMemo(shelfBookId, memo);
-        if (updated == 0) {
-            throw new IllegalStateException("update memo failed: " + shelfBookId);
-        }
-
-        ShelfItemJoinRow fresh = sbMapper.selectShelfItemById(shelfBookId);
-        ShelfItemResponse r = new ShelfItemResponse();
-        r.setShelfBookId(fresh.getShelfBookId());
-        r.setBookshelfId(fresh.getBookshelfId());
-        r.setBookId(fresh.getBookId());
-        r.setTitle(fresh.getTitle());
-        r.setAuthor(fresh.getAuthor());
-        r.setPages(fresh.getPages());
-        r.setCurrentPage(fresh.getCurrentPage());
-        r.setReadingStatus(fresh.getReadingStatus());
-        r.setMemo(fresh.getMemo()); // ← 변경된 memo
-        r.setAddedDatetime(fresh.getAddedDatetime() != null ? fresh.getAddedDatetime().format(DT) : null);
-        r.setModifiedDatetime(fresh.getModifiedDatetime() != null ? fresh.getModifiedDatetime().format(DT) : null);
         return r;
     }
 

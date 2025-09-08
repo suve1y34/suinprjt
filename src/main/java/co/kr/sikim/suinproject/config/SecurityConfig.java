@@ -1,5 +1,8 @@
 package co.kr.sikim.suinproject.config;
 
+import co.kr.sikim.suinproject.config.oauth.CustomOAuth2UserService;
+import co.kr.sikim.suinproject.config.oauth.OAuth2AuthenticationFailureHandler;
+import co.kr.sikim.suinproject.config.oauth.OAuth2AuthenticationSuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,6 +25,9 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+    private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
 
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -30,11 +36,16 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/api/search/**", "/error").permitAll()
+                        .requestMatchers("/api/auth/**", "/api/search/**", "/oauth2/authorization/**", "/login/oauth2/code/**", "/error").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // ✅ 프리플라이트 허용
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .oauth2Login(oauth -> oauth
+                        .userInfoEndpoint(u -> u.userService(customOAuth2UserService)) // 프로필 파싱 서비스
+                        .successHandler(oAuth2AuthenticationSuccessHandler)            // 성공 시 JWT 발급 + redirect
+                        .failureHandler(oAuth2AuthenticationFailureHandler)            // 실패 시 redirect
+                );;
         return http.build();
     }
 

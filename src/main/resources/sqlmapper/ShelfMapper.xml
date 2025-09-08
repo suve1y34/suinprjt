@@ -63,16 +63,14 @@
     <update id="updateShelfItem" parameterType="co.kr.sikim.suinproject.domain.ShelfItem">
         UPDATE shelf_book
         <set>
-            <if test="currentPage != null">current_page = #{currentPage},</if>
-            <if test="readingStatus != null">reading_status = #{readingStatus}</if>
+            modified_datetime = NOW()
+            <if test="currentPage != null">, current_page = #{currentPage}</if>
+            <if test="readingStatus != null">, reading_status = #{readingStatus}</if>
+            <if test="memoChanged != null and memoChanged == true">
+                , memo = #{memo}
+            </if>
         </set>
 
-        WHERE shelf_book_id = #{shelfBookId}
-    </update>
-
-    <update id="updateShelfBookMemo">
-        UPDATE shelf_book
-        SET memo = #{memo}
         WHERE shelf_book_id = #{shelfBookId}
     </update>
 
