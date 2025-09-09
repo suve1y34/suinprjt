@@ -5,6 +5,7 @@ import co.kr.sikim.suinproject.domain.Bookshelf;
 import co.kr.sikim.suinproject.domain.ShelfItem;
 import co.kr.sikim.suinproject.domain.ShelfItemJoinRow;
 import co.kr.sikim.suinproject.dto.shelf.BookshelfResponse;
+import co.kr.sikim.suinproject.dto.shelf.ShelfItemSearchCond;
 import co.kr.sikim.suinproject.dto.shelfitem.ShelfItemAddRequest;
 import co.kr.sikim.suinproject.dto.shelfitem.ShelfItemResponse;
 import co.kr.sikim.suinproject.dto.shelfitem.ShelfItemDeleteRequest;
@@ -47,12 +48,12 @@ public class ShelfServiceImpl implements ShelfService {
     }
 
     @Override
-    public List<ShelfItemResponse> listShelfItems(Long bookshelfId) {
-        if (!sbMapper.existBookshelfById(bookshelfId)) {
+    public List<ShelfItemResponse> listShelfItems(ShelfItemSearchCond cond) {
+        if (!sbMapper.existBookshelfById(cond.getBookshelfId())) {
             throw new IllegalArgumentException("bookshelf not found");
         }
 
-        return sbMapper.selectShelfItemsByShelfId(bookshelfId).stream().map(si -> {
+        return sbMapper.selectShelfItemsByShelfId(cond).stream().map(si -> {
             ShelfItemResponse r = new ShelfItemResponse();
             r.setShelfBookId(si.getShelfBookId());
             r.setBookshelfId(si.getBookshelfId());
@@ -205,5 +206,12 @@ public class ShelfServiceImpl implements ShelfService {
             // 총 페이지를 모르면 0이면 PLAN, >0이면 READING 가정
             return currentPage > 0 ? "READING" : "PLAN";
         }
+    }
+
+    private String normalizeStatusFilter(String status) {
+        if (status == null || status.isBlank()) return null;
+        String s = status.trim().toUpperCase();
+        if (Objects.equals(s, "PLAN") || Objects.equals(s, "READING") || Objects.equals(s, "DONE")) return s;
+        return null;
     }
 }

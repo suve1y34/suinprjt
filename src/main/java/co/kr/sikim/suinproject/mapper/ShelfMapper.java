@@ -3,6 +3,8 @@ package co.kr.sikim.suinproject.mapper;
 import co.kr.sikim.suinproject.domain.Bookshelf;
 import co.kr.sikim.suinproject.domain.ShelfItem;
 import co.kr.sikim.suinproject.domain.ShelfItemJoinRow;
+import co.kr.sikim.suinproject.dto.shelf.ShelfItemSearchCond;
+import co.kr.sikim.suinproject.dto.shelf.ShelfItemsListRequest;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -23,6 +25,6 @@ public interface ShelfMapper {
     boolean existsBookshelfById(@Param("bookshelfId") Long bookshelfId, @Param("bookId") Long bookId); // 책장에 책 존재 여부
     int countShelfItemsByBookshelfId(@Param("bookshelfId") Long bookshelfId); // 책장 책 카운트
 
-    List<ShelfItemJoinRow> selectShelfItemsByShelfId(@Param("bookshelfId") Long bookshelfId); // 책 리스트 조회
+    List<ShelfItemJoinRow> selectShelfItemsByShelfId(ShelfItemSearchCond req); // 책 리스트 조회
     ShelfItemJoinRow selectShelfItemById(@Param("shelfBookId") Long shelfBookId); // 책 상세 조회
 }

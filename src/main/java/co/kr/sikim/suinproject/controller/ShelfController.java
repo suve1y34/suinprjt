@@ -2,6 +2,8 @@ package co.kr.sikim.suinproject.controller;
 
 import co.kr.sikim.suinproject.common.ApiResponse;
 import co.kr.sikim.suinproject.dto.shelf.BookshelfResponse;
+import co.kr.sikim.suinproject.dto.shelf.ShelfItemSearchCond;
+import co.kr.sikim.suinproject.dto.shelf.ShelfItemsListRequest;
 import co.kr.sikim.suinproject.dto.shelfitem.ShelfItemAddRequest;
 import co.kr.sikim.suinproject.dto.shelfitem.ShelfItemDeleteRequest;
 import co.kr.sikim.suinproject.dto.shelfitem.ShelfItemResponse;
@@ -28,8 +30,13 @@ public class ShelfController {
 
     // 목록 조회
     @PostMapping("/list")
-    public ApiResponse<List<ShelfItemResponse>> listShelfItems(@RequestParam Long bookshelfId) {
-        return ApiResponse.ok(siSer.listShelfItems(bookshelfId));
+    public ApiResponse<List<ShelfItemResponse>> listShelfItems(@RequestBody ShelfItemsListRequest req) {
+        ShelfItemSearchCond cond = new ShelfItemSearchCond();
+        cond.setBookshelfId(req.getBookshelfId());
+        cond.setStatus(req.getStatus());
+        cond.setYear(req.getYear());
+        cond.setMonth(req.getMonth());
+        return ApiResponse.ok(siSer.listShelfItems(cond));
     }
 
     // 책 추가

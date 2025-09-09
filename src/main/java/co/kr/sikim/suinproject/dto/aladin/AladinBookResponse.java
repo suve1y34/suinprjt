@@ -12,4 +12,5 @@ public class AladinBookResponse {
     private Integer pages;
     private String publisher;
     private String pubDate;
+    private String coverImageUrl;
 }

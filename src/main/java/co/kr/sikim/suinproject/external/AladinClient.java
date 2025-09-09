@@ -88,6 +88,36 @@ public class AladinClient {
         return null;
     }
 
+    public String extractCoverUrlFromLookup(String rawJson) {
+        try {
+            JsonNode root = om.readTree(rawJson);
+            JsonNode items = root.path("item");
+            if (items.isArray() && items.size() > 0) {
+                JsonNode it = items.get(0);
+                String large = readText(it.path("coverLargeUrl"));
+                if (isNotBlank(large)) return large;
+
+                String cover = readText(it.path("cover"));
+                if (isNotBlank(cover)) return cover;
+
+                String small = readText(it.path("coverSmallUrl"));
+                if (isNotBlank(small)) return small;
+
+                // 일부 응답은 subInfo 하위에 있을 수 있음 (희귀)
+                JsonNode sub = it.path("subInfo");
+                if (sub.isObject()) {
+                    String sLarge = readText(sub.path("coverLargeUrl"));
+                    if (isNotBlank(sLarge)) return sLarge;
+                    String sCover = readText(sub.path("cover"));
+                    if (isNotBlank(sCover)) return sCover;
+                    String sSmall = readText(sub.path("coverSmallUrl"));
+                    if (isNotBlank(sSmall)) return sSmall;
+                }
+            }
+        } catch (Exception ignore) {}
+        return null;
+    }
+
     private Integer readInt(JsonNode n) {
         if (n == null || n.isNull()) return null;
         if (n.isInt()) return n.asInt();
@@ -95,6 +125,16 @@ public class AladinClient {
             try { return Integer.parseInt(n.asText().trim()); } catch (Exception ignore) {}
         }
         return null;
+    }
+
+    private String readText(JsonNode n) {
+        if (n == null || n.isNull()) return null;
+        if (n.isTextual()) return n.asText();
+        return n.toString();
+    }
+
+    private boolean isNotBlank(String s) {
+        return s != null && !s.trim().isEmpty();
     }
 
     private String enc(String s) {

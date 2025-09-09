@@ -12,6 +12,7 @@ public class ShelfItemJoinRow {
     private String title;
     private String author;
     private Integer pages;
+    private String coverImageUrl;
     private Integer currentPage;
     private String readingStatus;
     private String memo;

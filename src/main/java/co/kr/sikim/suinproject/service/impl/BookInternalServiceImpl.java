@@ -51,13 +51,27 @@ public class BookInternalServiceImpl implements BookInternalService {
             if (dirty) bMapper.updateBook(b);
         }
 
-        // pages가 비어있으면 LookUp으로 보강 + 캐시 업서트
-        if (b.getPages() == null) {
+        boolean needPage = (b.getPages() == null);
+        boolean needCover = (b.getCoverImageUrl() == null || b.getCoverImageUrl().isBlank());
+        if (needPage || needCover) {
             String raw = aladinClient.lookupRawByIsbn13(isbn13);
             cMapper.upsertAladinCache(isbn13, raw);
-            Integer itemPage = aladinClient.extractItemPageFromLookup(raw);
-            if (itemPage != null) {
-                b.setPages(itemPage);
+
+            if (needPage) {
+                Integer itemPage = aladinClient.extractItemPageFromLookup(raw);
+                if (itemPage != null) {
+                    b.setPages(itemPage);
+                }
+            }
+            if (needCover) {
+                String coverUrl = aladinClient.extractCoverUrlFromLookup(raw);
+                if (coverUrl != null && !coverUrl.isBlank()) {
+                    b.setCoverImageUrl(coverUrl);
+                }
+            }
+
+            // 둘 중 하나라도 채워졌으면 업데이트
+            if ((needPage && b.getPages() != null) || (needCover && b.getCoverImageUrl() != null && !b.getCoverImageUrl().isBlank())) {
                 bMapper.updateBook(b);
             }
         }

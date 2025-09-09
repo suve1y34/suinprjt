@@ -53,8 +53,25 @@ public class AladinParser {
                 }
                 if (pages == null) pages = readInt(it.path("page"));
 
+                // ★ 커버: coverLargeUrl → cover → coverSmallUrl → (subInfo.* 폴백)
+                String coverUrl = firstNonEmpty(
+                        getText(it, "coverLargeUrl"),
+                        getText(it, "cover"),
+                        getText(it, "coverSmallUrl")
+                );
+                if (coverUrl == null) {
+                    JsonNode sub = it.path("subInfo");
+                    if (sub.isObject()) {
+                        coverUrl = firstNonEmpty(
+                                getText(sub, "coverLargeUrl"),
+                                getText(sub, "cover"),
+                                getText(sub, "coverSmallUrl")
+                        );
+                    }
+                }
+
                 result.add(new AladinBookResponse(
-                        isbn13, title, author, pages, publisher, pubDate
+                        isbn13, title, author, pages, publisher, pubDate, coverUrl
                 ));
             }
             return result;

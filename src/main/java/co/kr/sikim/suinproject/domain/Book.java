@@ -14,6 +14,7 @@ public class Book {
     private Integer pages;
     private String publisher;
     private LocalDate pubDate;
+    private String coverImageUrl;
     private LocalDateTime createdDatetime;
     private LocalDateTime modifiedDatetime;
 }

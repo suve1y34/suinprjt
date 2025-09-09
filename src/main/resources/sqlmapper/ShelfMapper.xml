@@ -4,17 +4,18 @@
 
 <mapper namespace="co.kr.sikim.suinproject.mapper.ShelfMapper">
     <resultMap id="ShelfItemMap" type="co.kr.sikim.suinproject.domain.ShelfItemJoinRow">
-        <id     column="shelf_book_id" property="shelfBookId"/>
-        <result column="bookshelf_id" property="bookshelfId"/>
-        <result column="book_id" property="bookId"/>
-        <result column="title" property="title"/>
-        <result column="author" property="author"/>
-        <result column="pages" property="pages"/>
-        <result column="current_page" property="currentPage"/>
-        <result column="reading_status" property="readingStatus"/>
-        <result column="memo" property="memo"/>
-        <result column="added_datetime" property="addedDatetime"/>
-        <result column="modified_datetime" property="modifiedDatetime"/>
+        <id     column="shelf_book_id"      property="shelfBookId"/>
+        <result column="bookshelf_id"       property="bookshelfId"/>
+        <result column="book_id"            property="bookId"/>
+        <result column="title"              property="title"/>
+        <result column="author"             property="author"/>
+        <result column="pages"              property="pages"/>
+        <result column="cover_image_url"    property="coverImageUrl"/>
+        <result column="current_page"       property="currentPage"/>
+        <result column="reading_status"     property="readingStatus"/>
+        <result column="memo"               property="memo"/>
+        <result column="added_datetime"     property="addedDatetime"/>
+        <result column="modified_datetime"  property="modifiedDatetime"/>
     </resultMap>
 
     <resultMap id="ShelfMap" type="co.kr.sikim.suinproject.domain.Bookshelf">
@@ -105,7 +106,8 @@
             sb.memo,
             sb.added_datetime,
             sb.modified_datetime,
-            b.title, b.author, b.pages
+            b.title, b.author, b.pages,
+            b.cover_image_url
         FROM
             shelf_book sb
         JOIN
@@ -114,6 +116,15 @@
             b.book_id = sb.book_id
         WHERE
             sb.bookshelf_id = #{bookshelfId}
+        <if test="status != null and status != ''">
+            AND sb.reading_status = #{status}
+        </if>
+        <if test="year != null">
+            AND YEAR(sb.added_datetime) = #{year}
+        </if>
+        <if test="month != null">
+            AND MONTH(sb.added_datetime) = #{month}
+        </if>
         ORDER BY
             shelf_book_id DESC
     </select>
@@ -128,7 +139,8 @@
             sb.memo,
             sb.added_datetime,
             sb.modified_datetime,
-            b.title, b.author, b.pages
+            b.title, b.author, b.pages,
+            b.cover_image_url
         FROM
             shelf_book sb
         JOIN

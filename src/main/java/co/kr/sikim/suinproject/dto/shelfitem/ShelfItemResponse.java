@@ -17,4 +17,5 @@ public class ShelfItemResponse {
     private String addedDatetime;
     private String modifiedDatetime;
     private String memo;
+    private String coverImageUrl;
 }
