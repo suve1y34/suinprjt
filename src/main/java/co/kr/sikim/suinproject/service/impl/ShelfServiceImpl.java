@@ -63,9 +63,11 @@ public class ShelfServiceImpl implements ShelfService {
             r.setPages(si.getPages());
             r.setCurrentPage(si.getCurrentPage());
             r.setReadingStatus(si.getReadingStatus());
+            r.setMemo(si.getMemo());
+            r.setMemoVisibility(si.getMemoVisibility());
+
             r.setAddedDatetime(si.getAddedDatetime() != null ? si.getAddedDatetime().format(DT) : null);
             r.setModifiedDatetime(si.getModifiedDatetime() != null ? si.getModifiedDatetime().format(DT) : null);
-            r.setMemo(si.getMemo());
             return r;
         }).toList();
     }
@@ -111,6 +113,7 @@ public class ShelfServiceImpl implements ShelfService {
         si.setCurrentPage(currentPage);
         si.setReadingStatus(readingStatus);
         si.setMemo(req.getMemo());
+        si.setMemoVisibility(normalizeMemoVisibility(req.getMemoVisibility()));
         sbMapper.insertShelfItem(si);
 
         ShelfItemResponse r = new ShelfItemResponse();
@@ -123,6 +126,7 @@ public class ShelfServiceImpl implements ShelfService {
         r.setCurrentPage(currentPage);
         r.setReadingStatus(readingStatus);
         r.setMemo(req.getMemo());
+        r.setMemoVisibility(si.getMemoVisibility());
         return r;
     }
 
@@ -155,6 +159,10 @@ public class ShelfServiceImpl implements ShelfService {
             toUpdate.setMemoChanged(false);
         }
 
+        if (req.getMemoVisibility() != null && !req.getMemoVisibility().isBlank()) {
+            toUpdate.setMemoVisibility(normalizeMemoVisibility(req.getMemoVisibility()));
+        }
+
         int updated = sbMapper.updateShelfItem(toUpdate);
         if (updated == 0) {
             throw new IllegalStateException("update failed: " + req.getShelfBookId());
@@ -171,7 +179,10 @@ public class ShelfServiceImpl implements ShelfService {
         r.setPages(fresh.getPages());
         r.setCurrentPage(fresh.getCurrentPage());
         r.setReadingStatus(fresh.getReadingStatus());
+        r.setMemo(fresh.getMemo());
+        r.setMemoVisibility(fresh.getMemoVisibility());
         r.setAddedDatetime(fresh.getAddedDatetime() != null ? fresh.getAddedDatetime().format(DT) : null);
+        r.setModifiedDatetime(fresh.getModifiedDatetime() != null ? fresh.getModifiedDatetime().format(DT) : null);
         return r;
     }
 
@@ -213,5 +224,11 @@ public class ShelfServiceImpl implements ShelfService {
         String s = status.trim().toUpperCase();
         if (Objects.equals(s, "PLAN") || Objects.equals(s, "READING") || Objects.equals(s, "DONE")) return s;
         return null;
+    }
+
+    private String normalizeMemoVisibility(String v) {
+        if (v == null || v.isBlank()) return "PRIVATE";
+        String s = v.trim().toUpperCase();
+        return ("PUBLIC".equals(s)) ? "PUBLIC" : "PRIVATE";
     }
 }

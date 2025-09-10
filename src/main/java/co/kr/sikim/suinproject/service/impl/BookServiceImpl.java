@@ -1,7 +1,10 @@
 package co.kr.sikim.suinproject.service.impl;
 
 import co.kr.sikim.suinproject.domain.Book;
-import co.kr.sikim.suinproject.dto.BookResponse;
+import co.kr.sikim.suinproject.domain.PublicMemoRow;
+import co.kr.sikim.suinproject.dto.book.BookResponse;
+import co.kr.sikim.suinproject.dto.book.PublicMemoPageResponse;
+import co.kr.sikim.suinproject.dto.book.PublicMemoResponse;
 import co.kr.sikim.suinproject.mapper.BookMapper;
 import co.kr.sikim.suinproject.service.BookService;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +35,30 @@ public class BookServiceImpl implements BookService {
             throw new IllegalArgumentException("book not found: " + bookId);
         }
         return toDto(book);
+    }
+
+    @Override
+    public PublicMemoPageResponse listPublicMemosByIsbn13(String isbn13, Long cursor, int size) {
+        int pageSize = Math.max(1, Math.min(size, 50)); // 안전 가드(1~50)
+        List<PublicMemoRow> rows = bMapper.selectPublicMemosByIsbn13(isbn13, cursor, pageSize);
+
+        List<PublicMemoResponse> items = rows.stream().map(r -> {
+            PublicMemoResponse d = new PublicMemoResponse();
+            d.setNickname(r.getNickname());
+            d.setMemo(r.getMemo());
+//            d.setAddedDatetime(r.getAddedDatetime()
+//                    != null ? r.getAddedDatetime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) : null);
+            return d;
+        }).toList();
+
+        Long nextCursor = (items.size() == pageSize)
+                ? items.get(items.size() - 1).getShelfBookId()
+                : null;
+
+        var page = new PublicMemoPageResponse();
+        page.setItems(items);
+        page.setNextCursor(nextCursor);
+        return page;
     }
 
     private BookResponse toDto(Book b) {

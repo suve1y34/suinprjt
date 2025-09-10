@@ -17,4 +17,6 @@ public class ShelfItemUpdateRequest {
     // 메모 수정여부
     private Boolean memoChanged;
     private String memo;
+    // 메모 공개 여부: 'PRIVATE' | 'PUBLIC'
+    private String memoVisibility;
 }

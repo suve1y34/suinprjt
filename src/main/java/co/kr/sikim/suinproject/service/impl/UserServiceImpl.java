@@ -1,5 +1,6 @@
 package co.kr.sikim.suinproject.service.impl;
 
+import co.kr.sikim.suinproject.common.NicknameGenerator;
 import co.kr.sikim.suinproject.domain.User;
 import co.kr.sikim.suinproject.dto.auth.UserResponse;
 import co.kr.sikim.suinproject.dto.auth.UserUpdateRequest;

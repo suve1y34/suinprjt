@@ -1,6 +1,8 @@
 package co.kr.sikim.suinproject.mapper;
 
 import co.kr.sikim.suinproject.domain.Book;
+import co.kr.sikim.suinproject.domain.PublicMemoRow;
+import co.kr.sikim.suinproject.dto.book.PublicMemoResponse;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -18,4 +20,10 @@ public interface BookMapper {
     Book selectBookByIsbn13Code(@Param("isbn13Code") String isbn13Code);
     int insertBook(Book book);
     int updateBook(Book book);
+
+    List<PublicMemoRow> selectPublicMemosByIsbn13(
+            @Param("isbn13") String isbn13,
+            @Param("cursorId") Long cursorId,
+            @Param("limit") int limit
+    );
 }

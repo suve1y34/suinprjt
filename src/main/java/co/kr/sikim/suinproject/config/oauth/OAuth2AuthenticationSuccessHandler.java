@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
@@ -36,25 +37,41 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     @Transactional
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException {
-        OAuth2User principal = (OAuth2User) authentication.getPrincipal();
-        Map<String, Object> unified = (Map<String, Object>) principal.getAttributes().get("unified");
-        String email = unified != null ? String.valueOf(unified.getOrDefault("email", "")) : "";
-        String name = unified != null ? String.valueOf(unified.getOrDefault("name", "")) : "";
+        String email = null;
+        String name  = null;
 
-        if (email == null || email.isBlank()) {
-            // 이메일 동의 안 된 케이스: provider id를 임시 이메일로 대체하는 등 별도 정책 필요
-            // 여기서는 단순 실패 리다이렉트
+        Object principal = authentication.getPrincipal();
+
+        if (principal instanceof OidcUser oidc) {
+            // OIDC 경로: 표준 클레임 활용
+            email = oidc.getEmail();
+
+            // getAttribute는 제네릭이라 String으로 직접 받기
+            String fullName  = oidc.getFullName();
+            String nameAttr  = oidc.getAttribute("name");      // String
+            String givenName = oidc.getGivenName();
+
+            name = firstNonBlank(fullName, nameAttr, givenName, email, "");
+        } else if (principal instanceof OAuth2User ou) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> unified = (Map<String, Object>) ou.getAttributes().get("unified");
+
+            if (unified != null) {
+                email = toStr(unified.get("email"));
+                name  = toStr(unified.get("name"));
+            }
+            if (isBlank(email)) email = ou.getAttribute("email");
+            if (isBlank(name))  name  = ou.getAttribute("name");
+        }
+
+        if (isBlank(email)) {
             failureRedirect(response, request, "email_consent_required");
             return;
         }
 
-        // 1) 사용자 조회/생성
         User user = authSer.upsertOAuthUser(email, name);
-
-        // 2) JWT 발급
         String token = jwtTokenProvider.generateToken(user.getUserId(), user.getUserEmail());
 
-        // 3) redirect_uri 검사(화이트리스트)
         String redirect = Optional.ofNullable(request.getParameter("redirect_uri"))
                 .filter(uri -> whitelist.isAllowed(uri))
                 .orElse(DEFAULT_REDIRECT);
@@ -65,6 +82,18 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                 .toUriString();
 
         getRedirectStrategy().sendRedirect(request, response, target);
+    }
+
+    /* ---- 유틸 ---- */
+    private static boolean isBlank(String s) {
+        return s == null || s.isBlank();
+    }
+    private static String toStr(Object o) {
+        return (o == null) ? null : String.valueOf(o);
+    }
+    private static String firstNonBlank(String... vals) {
+        for (String v : vals) if (!isBlank(v)) return v;
+        return null;
     }
 
     private void failureRedirect(HttpServletResponse response, HttpServletRequest request, String code) throws IOException {

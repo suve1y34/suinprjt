@@ -14,6 +14,7 @@
         <result column="current_page"       property="currentPage"/>
         <result column="reading_status"     property="readingStatus"/>
         <result column="memo"               property="memo"/>
+        <result column="memo_visibility"    property="memoVisibility"/>
         <result column="added_datetime"     property="addedDatetime"/>
         <result column="modified_datetime"  property="modifiedDatetime"/>
     </resultMap>
@@ -52,12 +53,16 @@
     </insert>
 
     <insert id="insertShelfItem" parameterType="co.kr.sikim.suinproject.domain.ShelfItem">
-        INSERT INTO shelf_book (bookshelf_id, book_id, current_page, reading_status)
+        INSERT INTO shelf_book (
+            bookshelf_id, book_id, current_page, reading_status, memo, memo_visibility
+        )
         VALUES (
-        #{bookshelfId},
-        #{bookId},
-        COALESCE(#{currentPage}, 0),
-        COALESCE(#{readingStatus}, 'PLAN')
+            #{bookshelfId},
+            #{bookId},
+            COALESCE(#{currentPage}, 0),
+            COALESCE(#{readingStatus}, 'PLAN'),
+            #{memo},
+            COALESCE(#{memoVisibility}, 'PRIVATE')
         )
     </insert>
 
@@ -67,9 +72,8 @@
             modified_datetime = NOW()
             <if test="currentPage != null">, current_page = #{currentPage}</if>
             <if test="readingStatus != null">, reading_status = #{readingStatus}</if>
-            <if test="memoChanged != null and memoChanged == true">
-                , memo = #{memo}
-            </if>
+            <if test="memoChanged != null and memoChanged == true">, memo = #{memo}</if>
+            <if test="memoVisibility != null">, memo_visibility = #{memoVisibility}</if>
         </set>
 
         WHERE shelf_book_id = #{shelfBookId}
@@ -104,6 +108,7 @@
             sb.current_page,
             sb.reading_status,
             sb.memo,
+            sb.memo_visibility,
             sb.added_datetime,
             sb.modified_datetime,
             b.title, b.author, b.pages,
@@ -137,6 +142,7 @@
             sb.current_page,
             sb.reading_status,
             sb.memo,
+            sb.memo_visibility,
             sb.added_datetime,
             sb.modified_datetime,
             b.title, b.author, b.pages,

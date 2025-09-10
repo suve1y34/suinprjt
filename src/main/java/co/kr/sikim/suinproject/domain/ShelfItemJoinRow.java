@@ -16,6 +16,8 @@ public class ShelfItemJoinRow {
     private Integer currentPage;
     private String readingStatus;
     private String memo;
+    // 메모 공개 여부: 'PRIVATE' | 'PUBLIC'
+    private String memoVisibility;
     private LocalDateTime addedDatetime;  // DATE_FORMAT으로 문자열 확정
     private LocalDateTime modifiedDatetime;
 }

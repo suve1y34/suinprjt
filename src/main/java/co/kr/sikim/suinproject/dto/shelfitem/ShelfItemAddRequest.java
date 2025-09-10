@@ -24,4 +24,7 @@ public class ShelfItemAddRequest {
     private Integer currentPage;
 
     private String memo;
+
+    // 메모 공개 여부: 'PRIVATE' | 'PUBLIC'
+    private String memoVisibility;
 }

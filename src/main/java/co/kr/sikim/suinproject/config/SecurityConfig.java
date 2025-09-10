@@ -36,7 +36,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/api/search/**", "/oauth2/authorization/**", "/login/oauth2/code/**", "/error").permitAll()
+                        .requestMatchers("/api/search/**", "/oauth2/authorization/**", "/login/oauth2/code/**", "/error").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // ✅ 프리플라이트 허용
                         .anyRequest().authenticated()
                 )

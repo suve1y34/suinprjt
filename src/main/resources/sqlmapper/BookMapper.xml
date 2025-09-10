@@ -16,6 +16,13 @@
         <result column="modified_datetime" property="modifiedDatetime"/>
     </resultMap>
 
+    <resultMap id="PublicMemoMap" type="co.kr.sikim.suinproject.domain.PublicMemoRow">
+        <id     column="shelf_book_id"     property="shelfBookId"/>
+        <result column="nickname"          property="nickname"/>
+        <result column="memo"              property="memo"/>
+        <result column="added_datetime"    property="addedDatetime"/>
+    </resultMap>
+
     <!-- 책 목록 조회 -->
     <select id="selectBooks" resultMap="BookMap">
         SELECT
@@ -74,4 +81,25 @@
         cover_image_url = #{coverImageUrl}
         WHERE isbn13_code = #{isbn13Code}
     </update>
+
+    <select id="selectPublicMemosByIsbn13" resultMap="PublicMemoMap">
+        SELECT
+            sb.shelf_book_id,
+            u.nickname AS nickname,
+            sb.memo,
+            sb.added_datetime
+        FROM shelf_book sb
+        JOIN bookshelf bs ON bs.bookshelf_id = sb.bookshelf_id
+        JOIN book b       ON b.book_id       = sb.book_id
+        JOIN `user` u      ON u.user_id       = bs.user_id
+        WHERE b.isbn13_code = #{isbn13}
+        AND sb.memo_visibility = 'PUBLIC'
+        AND sb.memo IS NOT NULL
+        AND TRIM(sb.memo) != ''
+        <if test="cursorId != null">
+            AND sb.shelf_book_id &lt; #{cursorId}
+        </if>
+        ORDER BY sb.shelf_book_id DESC
+        LIMIT #{limit}
+    </select>
 </mapper>
