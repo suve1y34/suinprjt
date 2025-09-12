@@ -63,8 +63,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (SecurityContextHolder.getContext().getAuthentication() == null) {
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(
-                                // principal: 간단히 userId만 쓰셔도 되고,
-                                // 커스텀 LoginUser(userId, email) 객체를 써도 됩니다.
                                 userId,
                                 null,
                                 Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))

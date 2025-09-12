@@ -10,4 +10,8 @@ public class ShelfItemsListRequest {
     private String status; // PLAN | READING | DONE | null
     private Integer year;   // YYYY
     private Integer month;  // 1~12
+
+    private String keyword;
+    private String sort; // 정렬 기준
+    private String order; // 오름내림
 }

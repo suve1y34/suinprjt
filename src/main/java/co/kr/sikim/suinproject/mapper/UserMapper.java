@@ -16,11 +16,4 @@ public interface UserMapper {
     int insertUser(User user);
     int updateUser(User user);
     int deleteUserById(@Param("userId") Long userId);
-
-    // 비밀번호 변경
-    int updateUserPasswordById(@Param("userId") Long userId,
-                               @Param("userPasswordHash") String userPasswordHash);
-    // 비밀번호 필수 변경처리
-    int updateUserMustChangePasswordFlagById(@Param("userId") Long userId,
-                                             @Param("mustChange") boolean mustChange);
 }

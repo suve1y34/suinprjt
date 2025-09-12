@@ -9,9 +9,34 @@
         <result property="userPassword"     column="user_password"/>
         <result property="userName"         column="user_name"/>
         <result property="nickname"         column="nickname"/>
+        <result property="userPhone"        column="user_phone"/>
+        <result property="goalYearlyCount"  column="goal_yearly_count"/>
         <result property="createdDatetime"  column="created_datetime"/>
         <result property="modifiedDatetime" column="modified_datetime"/>
     </resultMap>
+
+    <insert id="insertUser" parameterType="co.kr.sikim.suinproject.domain.User" useGeneratedKeys="true" keyProperty="userId">
+        INSERT INTO `user`
+        (user_email, user_password, user_name, nickname, user_phone)
+        VALUES
+        (#{userEmail}, #{userPassword}, #{userName}, #{nickname}, #{userPhone})
+    </insert>
+
+    <update id="updateUser" parameterType="co.kr.sikim.suinproject.domain.User">
+        UPDATE
+        `user`
+        SET
+        nickname   = #{nickname},
+        user_phone = #{userPhone},
+        goal_yearly_count = #{goalYearlyCount},
+        modified_datetime = CURRENT_TIMESTAMP
+        WHERE
+        user_id = #{userId}
+    </update>
+
+    <delete id="deleteUserById" parameterType="long">
+        DELETE FROM `user` WHERE user_id = #{userId}
+    </delete>
 
     <select id="selectUserById" parameterType="long" resultMap="UserMap">
         SELECT * FROM `user` WHERE user_id = #{userId}
@@ -42,45 +67,4 @@
             AND user_id != #{userId}
         )
     </select>
-
-    <insert id="insertUser" parameterType="co.kr.sikim.suinproject.domain.User" useGeneratedKeys="true" keyProperty="userId">
-        INSERT INTO `user`
-        (user_email, user_password, user_name, nickname)
-        VALUES
-        (#{userEmail}, #{userPassword}, #{userName}, #{nickname})
-    </insert>
-
-    <update id="updateUser" parameterType="co.kr.sikim.suinproject.domain.User">
-        UPDATE
-            `user`
-        SET
-            nickname   = #{nickname},
-            modified_datetime = CURRENT_TIMESTAMP
-        WHERE
-            user_id = #{userId}
-    </update>
-
-    <update id="updateUserPasswordById">
-        UPDATE
-            `user`
-        SET
-            user_password = #{userPasswordHash},
-            modified_datetime = CURRENT_TIMESTAMP
-        WHERE
-            user_id = #{userId}
-    </update>
-
-    <update id="updateUserMustChangePasswordFlagById">
-        UPDATE
-            `user`
-        SET
-            must_change_password = #{mustChange},
-            modified_datetime = CURRENT_TIMESTAMP
-        WHERE
-            user_id = #{userId}
-    </update>
-
-    <delete id="deleteUserById" parameterType="long">
-        DELETE FROM `user` WHERE user_id = #{userId}
-    </delete>
 </mapper>

@@ -4,6 +4,7 @@ import co.kr.sikim.suinproject.common.ApiResponse;
 import co.kr.sikim.suinproject.dto.shelf.BookshelfResponse;
 import co.kr.sikim.suinproject.dto.shelf.ShelfItemSearchCond;
 import co.kr.sikim.suinproject.dto.shelf.ShelfItemsListRequest;
+import co.kr.sikim.suinproject.dto.shelf.StatsResponse;
 import co.kr.sikim.suinproject.dto.shelfitem.ShelfItemAddRequest;
 import co.kr.sikim.suinproject.dto.shelfitem.ShelfItemDeleteRequest;
 import co.kr.sikim.suinproject.dto.shelfitem.ShelfItemResponse;
@@ -11,6 +12,8 @@ import co.kr.sikim.suinproject.dto.shelfitem.ShelfItemUpdateRequest;
 import co.kr.sikim.suinproject.service.ShelfService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,11 +34,16 @@ public class ShelfController {
     // 목록 조회
     @PostMapping("/list")
     public ApiResponse<List<ShelfItemResponse>> listShelfItems(@RequestBody ShelfItemsListRequest req) {
+        String keyword = req.getKeyword();
+
         ShelfItemSearchCond cond = new ShelfItemSearchCond();
         cond.setBookshelfId(req.getBookshelfId());
         cond.setStatus(req.getStatus());
         cond.setYear(req.getYear());
         cond.setMonth(req.getMonth());
+        cond.setKeyword((keyword == null || keyword.isBlank()) ? null : keyword.trim());
+        cond.setSort(req.getSort());
+        cond.setOrder(req.getOrder());
         return ApiResponse.ok(siSer.listShelfItems(cond));
     }
 
@@ -49,6 +57,7 @@ public class ShelfController {
     // 책 수정
     @PostMapping("/update")
     public ApiResponse<ShelfItemResponse> updateShelfItem(@RequestBody ShelfItemUpdateRequest req) {
+        System.out.println("--------------" + req.getReview());
         return ApiResponse.ok(siSer.updateShelfItem(req));
     }
 
@@ -57,5 +66,15 @@ public class ShelfController {
     public ApiResponse<Map<String, Boolean>> deleteShelfItem(@RequestBody ShelfItemDeleteRequest req) {
         siSer.deleteShelfItem(req);
         return ApiResponse.ok(Map.of("success", true));
+    }
+
+    @GetMapping("/stats")
+    public ApiResponse<StatsResponse> getStats(@RequestParam(value = "year", required = false) Integer year) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || auth.getPrincipal() == null) throw new SecurityException("unauthorized");
+        Long userId = (auth.getPrincipal() instanceof Long) ? (Long) auth.getPrincipal()
+                : Long.valueOf(String.valueOf(auth.getPrincipal()));
+
+        return ApiResponse.ok(siSer.getShelfStats(userId, year));
     }
 }

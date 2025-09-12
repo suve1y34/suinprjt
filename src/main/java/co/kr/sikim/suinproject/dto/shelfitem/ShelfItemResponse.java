@@ -3,6 +3,8 @@ package co.kr.sikim.suinproject.dto.shelfitem;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDate;
+
 @Getter
 @Setter
 public class ShelfItemResponse {
@@ -15,11 +17,17 @@ public class ShelfItemResponse {
     private Integer pages;
     private String coverImageUrl;
 
+    private LocalDate startDate;
+    private LocalDate endDate;
+
     private Integer currentPage;
     private String readingStatus;
+
     private String memo;
-    // 메모 공개 여부: 'PRIVATE' | 'PUBLIC'
     private String memoVisibility;
+
+    private String review;
+    private String reviewVisibility;
 
     private String addedDatetime;
     private String modifiedDatetime;

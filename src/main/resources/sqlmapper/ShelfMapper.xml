@@ -12,9 +12,13 @@
         <result column="pages"              property="pages"/>
         <result column="cover_image_url"    property="coverImageUrl"/>
         <result column="current_page"       property="currentPage"/>
+        <result property="startDate"        column="start_date"/>
+        <result property="endDate"          column="end_date"/>
         <result column="reading_status"     property="readingStatus"/>
         <result column="memo"               property="memo"/>
         <result column="memo_visibility"    property="memoVisibility"/>
+        <result property="review"           column="review"/>
+        <result property="reviewVisibility" column="review_visibility"/>
         <result column="added_datetime"     property="addedDatetime"/>
         <result column="modified_datetime"  property="modifiedDatetime"/>
     </resultMap>
@@ -27,8 +31,8 @@
 
     <select id="selectBookshelfById" resultMap="ShelfMap">
         SELECT bookshelf_id, user_id, created_datetime
-        FROM bookshelf bs
-        WHERE bs.user_id = #{userId}
+        FROM bookshelf
+        WHERE user_id = #{userId}
     </select>
 
     <select id="countShelfItems" resultType="int">
@@ -47,6 +51,21 @@
         )
     </select>
 
+    <select id="countShelfBooksByStatus" resultType="int">
+        SELECT
+            COUNT(*)
+        FROM
+            shelf_book sb
+        JOIN
+            bookshelf s
+        ON
+            sb.bookshelf_id = s.bookshelf_id
+        WHERE
+            s.user_id = #{userId}
+        AND
+            sb.reading_status = #{status}
+    </select>
+
     <insert id="insertBookshelf" parameterType="co.kr.sikim.suinproject.domain.Bookshelf"
             useGeneratedKeys="true" keyProperty="bookshelfId">
         INSERT INTO bookshelf (user_id) VALUES (#{userId})
@@ -54,26 +73,34 @@
 
     <insert id="insertShelfItem" parameterType="co.kr.sikim.suinproject.domain.ShelfItem">
         INSERT INTO shelf_book (
-            bookshelf_id, book_id, current_page, reading_status, memo, memo_visibility
+            bookshelf_id, book_id, current_page, start_date, end_date, reading_status, memo, memo_visibility, review, review_visibility
         )
         VALUES (
             #{bookshelfId},
             #{bookId},
             COALESCE(#{currentPage}, 0),
+            #{startDate}, #{endDate}
             COALESCE(#{readingStatus}, 'PLAN'),
             #{memo},
-            COALESCE(#{memoVisibility}, 'PRIVATE')
+            COALESCE(#{memoVisibility}, 'PRIVATE'),
+            #{review},
+            COALESCE(#{reviewVisibility}, 'PRIVATE')
         )
     </insert>
 
     <update id="updateShelfItem" parameterType="co.kr.sikim.suinproject.domain.ShelfItem">
         UPDATE shelf_book
         <set>
-            modified_datetime = NOW()
+            modified_datetime = CURRENT_TIMESTAMP
             <if test="currentPage != null">, current_page = #{currentPage}</if>
+            <if test="startDate != null">, start_date = #{startDate}</if>
+            <if test="endDate != null">, end_date = #{endDate}</if>
             <if test="readingStatus != null">, reading_status = #{readingStatus}</if>
             <if test="memoChanged != null and memoChanged == true">, memo = #{memo}</if>
             <if test="memoVisibility != null">, memo_visibility = #{memoVisibility}</if>
+            <if test="reviewChanged != null and reviewChanged == true">, review = #{review}</if>
+            <if test="reviewVisibility != null and reviewVisibility != ''">, review_visibility = #{reviewVisibility}</if>
+
         </set>
 
         WHERE shelf_book_id = #{shelfBookId}
@@ -107,8 +134,12 @@
             sb.book_id,
             sb.current_page,
             sb.reading_status,
+            sb.start_date,
+            sb.end_date,
             sb.memo,
             sb.memo_visibility,
+            sb.review,
+            sb.review_visibility,
             sb.added_datetime,
             sb.modified_datetime,
             b.title, b.author, b.pages,
@@ -130,8 +161,24 @@
         <if test="month != null">
             AND MONTH(sb.added_datetime) = #{month}
         </if>
+
+        <!-- 키워드 검색 -->
+        <if test="keyword != null and keyword != ''">
+            AND (
+            b.title  LIKE CONCAT('%', #{keyword}, '%')
+            OR b.author LIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
         ORDER BY
-            shelf_book_id DESC
+        <choose>
+            <when test="sort == 'title'"> b.title </when>
+            <when test="sort == 'pages'"> b.pages </when>
+            <otherwise> sb.added_datetime </otherwise>
+        </choose>
+        <choose>
+            <when test="order == 'asc'"> ASC </when>
+            <otherwise> DESC </otherwise>
+        </choose>
     </select>
 
     <select id="selectShelfItemById" resultMap="ShelfItemMap">
@@ -141,8 +188,12 @@
             sb.book_id,
             sb.current_page,
             sb.reading_status,
+            sb.start_date,
+            sb.end_date,
             sb.memo,
             sb.memo_visibility,
+            sb.review,
+            sb.review_visibility,
             sb.added_datetime,
             sb.modified_datetime,
             b.title, b.author, b.pages,
@@ -155,5 +206,43 @@
             b.book_id = sb.book_id
         WHERE
             sb.shelf_book_id = #{shelfBookId}
+    </select>
+
+    <!-- 상태별 개수 -->
+    <select id="selectStatusCountsByUserId" parameterType="map" resultType="map">
+        SELECT
+            sb.reading_status AS status,
+            COUNT(*) AS cnt
+        FROM
+            shelf_book sb
+        JOIN
+            bookshelf bs
+        ON
+            bs.bookshelf_id = sb.bookshelf_id
+        WHERE
+            bs.user_id = #{userId}
+        GROUP BY
+            sb.reading_status
+    </select>
+
+    <!-- 월별(완독) 개수: end_date 기준, 연도 필터(옵션) -->
+    <select id="selectMonthlyDoneCountsByUserId" parameterType="map" resultType="map">
+        SELECT
+            YEAR(sb.end_date) AS y,
+            MONTH(sb.end_date) AS m,
+            COUNT(*) AS cnt
+        FROM shelf_book sb
+        JOIN bookshelf bs
+        ON bs.bookshelf_id = sb.bookshelf_id
+        WHERE
+            bs.user_id = #{userId}
+            AND
+            sb.end_date IS NOT NULL
+            AND
+            (#{year} IS NULL OR YEAR(sb.end_date) = #{year})
+        GROUP BY
+            YEAR(sb.end_date), MONTH(sb.end_date)
+        ORDER BY
+            y, m
     </select>
 </mapper>

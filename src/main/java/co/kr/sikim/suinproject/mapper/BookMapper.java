@@ -1,8 +1,7 @@
 package co.kr.sikim.suinproject.mapper;
 
 import co.kr.sikim.suinproject.domain.Book;
-import co.kr.sikim.suinproject.domain.PublicMemoRow;
-import co.kr.sikim.suinproject.dto.book.PublicMemoResponse;
+import co.kr.sikim.suinproject.domain.PublicReviewRow;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -21,7 +20,7 @@ public interface BookMapper {
     int insertBook(Book book);
     int updateBook(Book book);
 
-    List<PublicMemoRow> selectPublicMemosByIsbn13(
+    List<PublicReviewRow> selectPublicReviewsByIsbn13(
             @Param("isbn13") String isbn13,
             @Param("cursorId") Long cursorId,
             @Param("limit") int limit

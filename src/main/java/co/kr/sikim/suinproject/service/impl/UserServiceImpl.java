@@ -52,6 +52,8 @@ public class UserServiceImpl implements UserService {
         User toUpdate = new User();
         toUpdate.setUserId(userId);
         if (req.getNickname() != null && !req.getNickname().isBlank()) toUpdate.setNickname(req.getNickname().trim());
+        if (req.getUserPhone() != null && !req.getUserPhone().isBlank()) toUpdate.setUserPhone(req.getUserPhone().trim());
+        if (req.getGoalYearlyCount() != null) toUpdate.setGoalYearlyCount(req.getGoalYearlyCount());
 
         int n = uMapper.updateUser(toUpdate);
         if (n == 0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "nothing to update");
@@ -63,6 +65,8 @@ public class UserServiceImpl implements UserService {
         r.setEmail(fresh.getUserEmail());
         r.setUserName(fresh.getUserName());
         r.setNickname(fresh.getNickname());
+        r.setUserPhone(fresh.getUserPhone());
+        r.setGoalYearlyCount(fresh.getGoalYearlyCount());
         r.setCreatedDatetime(fresh.getCreatedDatetime() != null ? fresh.getCreatedDatetime().format(DT) : null);
         r.setModifiedDatetime(fresh.getModifiedDatetime() != null ? fresh.getModifiedDatetime().format(DT) : null);
         return r;

@@ -42,10 +42,10 @@ public class AladinClient {
         // 주요 파라미터: TTBKey, Query, QueryType, SearchTarget, Start, MaxResults, output=js
         URI uri = UriComponentsBuilder.fromHttpUrl(baseUrl)
                 .queryParam("ttbkey", ttbKey)
-                .queryParam("Query",  keyword)       // ✅ UriComponentsBuilder가 UTF-8로 정확히 인코딩
+                .queryParam("Query",  keyword)
                 .queryParam("QueryType", queryType)  // Keyword / Title / Author
                 .queryParam("SearchTarget", searchTarget) // Book
-                .queryParam("start", start)          // ✅ 대문자
+                .queryParam("start", start)
                 .queryParam("MaxResults", maxResults)
                 .queryParam("output", output)        // js 또는 xml (대문자 O)
                 .queryParam("Version", "20131101")

@@ -65,18 +65,6 @@ public class AuthServiceImpl implements AuthService {
 
     @Transactional
     @Override
-    public void resetPassword(Long userId) {
-        String hash = pwEncoder.encode("0000");
-        int n = uMapper.updateUserPasswordById(userId, hash);
-        if (n == 0) throw new IllegalArgumentException("user not found: " + userId);
-
-        try {
-            uMapper.updateUserMustChangePasswordFlagById(userId, true);
-        } catch (Exception e) {}
-    }
-
-    @Transactional
-    @Override
     public UserResponse createUser(RegisterRequest req) {
         // 중복 검사
         if (uMapper.existsUserByUserEmail(req.getEmail())) {

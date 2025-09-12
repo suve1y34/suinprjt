@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Getter
 @Setter
@@ -24,7 +25,11 @@ public class ShelfItemAddRequest {
     private Integer currentPage;
 
     private String memo;
-
-    // 메모 공개 여부: 'PRIVATE' | 'PUBLIC'
     private String memoVisibility;
+
+    private String review;
+    private String reviewVisibility;
+
+    private LocalDate startDate;
+    private LocalDate endDate;
 }

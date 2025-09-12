@@ -6,6 +6,7 @@ import co.kr.sikim.suinproject.domain.ShelfItem;
 import co.kr.sikim.suinproject.domain.ShelfItemJoinRow;
 import co.kr.sikim.suinproject.dto.shelf.BookshelfResponse;
 import co.kr.sikim.suinproject.dto.shelf.ShelfItemSearchCond;
+import co.kr.sikim.suinproject.dto.shelf.StatsResponse;
 import co.kr.sikim.suinproject.dto.shelfitem.ShelfItemAddRequest;
 import co.kr.sikim.suinproject.dto.shelfitem.ShelfItemResponse;
 import co.kr.sikim.suinproject.dto.shelfitem.ShelfItemDeleteRequest;
@@ -18,9 +19,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Year;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Service
 @RequiredArgsConstructor
@@ -65,6 +68,8 @@ public class ShelfServiceImpl implements ShelfService {
             r.setReadingStatus(si.getReadingStatus());
             r.setMemo(si.getMemo());
             r.setMemoVisibility(si.getMemoVisibility());
+            r.setReview(si.getReview());
+            r.setReviewVisibility(si.getReviewVisibility());
 
             r.setAddedDatetime(si.getAddedDatetime() != null ? si.getAddedDatetime().format(DT) : null);
             r.setModifiedDatetime(si.getModifiedDatetime() != null ? si.getModifiedDatetime().format(DT) : null);
@@ -113,7 +118,11 @@ public class ShelfServiceImpl implements ShelfService {
         si.setCurrentPage(currentPage);
         si.setReadingStatus(readingStatus);
         si.setMemo(req.getMemo());
-        si.setMemoVisibility(normalizeMemoVisibility(req.getMemoVisibility()));
+        si.setStartDate(req.getStartDate()); // FE에서 세팅한 값
+        si.setEndDate(req.getEndDate());
+
+        si.setReview(req.getReview());
+        si.setReviewVisibility(normalizeReviewVisibility(req.getReviewVisibility()));
         sbMapper.insertShelfItem(si);
 
         ShelfItemResponse r = new ShelfItemResponse();
@@ -124,9 +133,13 @@ public class ShelfServiceImpl implements ShelfService {
         r.setAuthor(ensuredBook.getAuthor());
         r.setPages(ensuredBook.getPages());
         r.setCurrentPage(currentPage);
+        r.setStartDate(si.getStartDate());
+        r.setEndDate(si.getEndDate());
         r.setReadingStatus(readingStatus);
         r.setMemo(req.getMemo());
         r.setMemoVisibility(si.getMemoVisibility());
+        r.setReview(req.getReview());
+        r.setReviewVisibility(req.getReviewVisibility());
         return r;
     }
 
@@ -151,6 +164,8 @@ public class ShelfServiceImpl implements ShelfService {
         toUpdate.setShelfBookId(req.getShelfBookId());
         toUpdate.setCurrentPage(nextPage);
         toUpdate.setReadingStatus(nextStatus); // null이면 미변경
+        toUpdate.setStartDate(req.getStartDate());
+        toUpdate.setEndDate(req.getEndDate());
 
         if (Boolean.TRUE.equals(req.getMemoChanged())) {
             toUpdate.setMemo(req.getMemo()); // null이면 비우기
@@ -159,8 +174,13 @@ public class ShelfServiceImpl implements ShelfService {
             toUpdate.setMemoChanged(false);
         }
 
-        if (req.getMemoVisibility() != null && !req.getMemoVisibility().isBlank()) {
-            toUpdate.setMemoVisibility(normalizeMemoVisibility(req.getMemoVisibility()));
+        // 리뷰
+        if (Boolean.TRUE.equals(req.getReviewChanged())) {
+            toUpdate.setReviewChanged(true);
+            toUpdate.setReview(req.getReview());             // null → 비우기
+            if (req.getReviewVisibility() != null && !req.getReviewVisibility().isBlank()) {
+                toUpdate.setReviewVisibility(normalizeReviewVisibility(req.getReviewVisibility()));
+            }
         }
 
         int updated = sbMapper.updateShelfItem(toUpdate);
@@ -178,9 +198,13 @@ public class ShelfServiceImpl implements ShelfService {
         r.setAuthor(fresh.getAuthor());
         r.setPages(fresh.getPages());
         r.setCurrentPage(fresh.getCurrentPage());
+        r.setStartDate(fresh.getStartDate());
+        r.setEndDate(fresh.getEndDate());
         r.setReadingStatus(fresh.getReadingStatus());
         r.setMemo(fresh.getMemo());
         r.setMemoVisibility(fresh.getMemoVisibility());
+        r.setReview(fresh.getReview());
+        r.setReviewVisibility(fresh.getReviewVisibility());
         r.setAddedDatetime(fresh.getAddedDatetime() != null ? fresh.getAddedDatetime().format(DT) : null);
         r.setModifiedDatetime(fresh.getModifiedDatetime() != null ? fresh.getModifiedDatetime().format(DT) : null);
         return r;
@@ -193,6 +217,11 @@ public class ShelfServiceImpl implements ShelfService {
         if (deleted == 0) {
             throw new IllegalArgumentException("shelf item not found: " + req.getShelfBookId());
         }
+    }
+
+    @Override
+    public int countShelfBooksByStatus(Long userId, String status) {
+        return sbMapper.countShelfBooksByStatus(userId, status);
     }
 
     private int clamp(Integer v, int min, Integer maxNullable) {
@@ -226,9 +255,49 @@ public class ShelfServiceImpl implements ShelfService {
         return null;
     }
 
-    private String normalizeMemoVisibility(String v) {
+    private String normalizeReviewVisibility(String v) {
         if (v == null || v.isBlank()) return "PRIVATE";
         String s = v.trim().toUpperCase();
         return ("PUBLIC".equals(s)) ? "PUBLIC" : "PRIVATE";
+    }
+
+    @Override
+    public StatsResponse getShelfStats(Long userId, Integer year) {
+        // 연도 기본값: 올해
+        Integer targetYear = (year != null && year > 0) ? year : Year.now().getValue();
+
+        // 1) 상태별 개수
+        List<Map<String, Object>> rows = sbMapper.selectStatusCountsByUserId(userId);
+        // 기본 0으로 초기화
+        Map<String, Integer> statusMap = new HashMap<>();
+        statusMap.put("PLAN", 0);
+        statusMap.put("READING", 0);
+        statusMap.put("DONE", 0);
+
+        for (Map<String, Object> r : rows) {
+            String s = String.valueOf(r.get("status"));
+            int cnt = ((Number) r.get("cnt")).intValue();
+            if (statusMap.containsKey(s)) statusMap.put(s, cnt);
+        }
+
+        List<StatsResponse.StatusRatio> statusRatio = new ArrayList<>();
+        statusRatio.add(new StatsResponse.StatusRatio("읽기전", statusMap.get("PLAN"), "PLAN"));
+        statusRatio.add(new StatsResponse.StatusRatio("읽는중", statusMap.get("READING"), "READING"));
+        statusRatio.add(new StatsResponse.StatusRatio("다읽음", statusMap.get("DONE"), "DONE"));
+
+        // 2) 월별(완독) 개수
+        List<Map<String, Object>> monthlyRows = sbMapper.selectMonthlyDoneCountsByUserId(userId, targetYear);
+        Map<Integer, Integer> byMonth = new HashMap<>();
+        for (Map<String, Object> r : monthlyRows) {
+            Integer m = ((Number) r.get("m")).intValue(); // 1..12
+            Integer cnt = ((Number) r.get("cnt")).intValue();
+            byMonth.put(m, cnt);
+        }
+
+        List<StatsResponse.MonthlyCount> monthly = IntStream.rangeClosed(1, 12)
+                .mapToObj(m -> new StatsResponse.MonthlyCount(m + "월", byMonth.getOrDefault(m, 0), m))
+                .collect(Collectors.toList());
+
+        return new StatsResponse(statusRatio, monthly);
     }
 }

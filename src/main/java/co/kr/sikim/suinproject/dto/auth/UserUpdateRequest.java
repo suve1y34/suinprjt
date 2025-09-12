@@ -7,4 +7,6 @@ import lombok.Setter;
 @Setter
 public class UserUpdateRequest {
     private String nickname;
+    private String userPhone;
+    private Integer goalYearlyCount;
 }

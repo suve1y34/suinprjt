@@ -2,6 +2,7 @@ package co.kr.sikim.suinproject.domain;
 
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -14,10 +15,16 @@ public class ShelfItemJoinRow {
     private Integer pages;
     private String coverImageUrl;
     private Integer currentPage;
+    private LocalDate startDate;
+    private LocalDate endDate;
     private String readingStatus;
+
     private String memo;
-    // 메모 공개 여부: 'PRIVATE' | 'PUBLIC'
     private String memoVisibility;
+
+    private String review;
+    private String reviewVisibility;
+
     private LocalDateTime addedDatetime;  // DATE_FORMAT으로 문자열 확정
     private LocalDateTime modifiedDatetime;
 }

@@ -13,7 +13,7 @@ public class NicknameGenerator {
 
     private static final SecureRandom RND = new SecureRandom();
 
-    // 형용사(모두 '한'으로 끝나도록)
+    // 형용사
     private static final String[] ADJ = {
             "행복한","평온한","차분한","용감한","상냥한","든든한","건강한","소중한",
             "영리한","정직한","유쾌한","진지한","명랑한","기특한","화목한","관대한",
@@ -33,8 +33,6 @@ public class NicknameGenerator {
     );
 
     private NicknameGenerator() {}
-
-    // ===== 공개 메서드 =====
 
     /**
      * 계정 식별자(providerId 또는 email)을 시드로 받아 유니크 닉네임 생성
@@ -112,7 +110,6 @@ public class NicknameGenerator {
         return solveByShortTail(base, seed, existsCheck);
     }
 
-    // 숫자 없이: 명사 2개 합성으로 회피 (예: "행복한 여우숲")
     private static String solveByDoubleNoun(String base, String seed, java.util.function.Predicate<String> existsCheck) {
         String[] sp = base.split(" ");
         String adj = sp[0], noun = sp.length > 1 ? sp[1] : NOUN[0];

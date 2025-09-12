@@ -11,6 +11,8 @@ public class User {
     private String userPassword;
     private String userName;
     private String nickname;
+    private String userPhone;
+    private Integer goalYearlyCount;
     private LocalDateTime createdDatetime;
     private LocalDateTime modifiedDatetime;
 }

@@ -5,9 +5,9 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class PublicMemoResponse {
+public class PublicReviewResponse {
     private Long shelfBookId;
     private String nickname;
     private String addedDatetime; // "yyyy-MM-dd HH:mm:ss"
-    private String memo;
+    private String review;
 }
