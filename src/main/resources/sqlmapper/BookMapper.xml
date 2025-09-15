@@ -23,48 +23,6 @@
         <result column="added_datetime"    property="addedDatetime"/>
     </resultMap>
 
-    <!-- 책 목록 조회 -->
-    <select id="selectBooks" resultMap="BookMap">
-        SELECT
-            b.*
-        FROM
-            book b
-        <where>
-            <if test="keyword != null and keyword != ''">
-                (title LIKE CONCAT('%', #{keyword}, '%')
-                OR author LIKE CONCAT('%', #{keyword}, '%'))
-            </if>
-        </where>
-        ORDER BY
-            b.book_id DESC
-    </select>
-
-    <!-- 책 상세 조회 -->
-    <select id="selectBookById" resultMap="BookMap">
-        SELECT
-            b.*
-        FROM
-            book b
-        WHERE
-            b.book_id = #{bookId}
-    </select>
-
-    <select id="existsBookByIsbn13Code" parameterType="string" resultType="boolean">
-        SELECT
-            EXISTS(
-                SELECT 1 FROM book WHERE isbn13_code = #{isbn13Code}
-            )
-    </select>
-
-    <select id="selectBookByIsbn13Code" parameterType="string" resultMap="BookMap">
-        SELECT
-            book_id, isbn13_code, title, author, CAST(pages AS SIGNED) AS pages, publisher, pub_date, cover_image_url
-        FROM
-            book
-        WHERE
-            isbn13_code = #{isbn13Code}
-    </select>
-
     <insert id="insertBook" parameterType="co.kr.sikim.suinproject.domain.Book"
             useGeneratedKeys="true" keyProperty="bookId" keyColumn="book_id">
         INSERT INTO book (isbn13_code, title, author, pages, publisher, pub_date, cover_image_url)
@@ -82,12 +40,47 @@
         WHERE isbn13_code = #{isbn13Code}
     </update>
 
+    <!-- 책 상세 조회 -->
+    <select id="selectBookById" resultMap="BookMap">
+        SELECT
+        b.*
+        FROM
+        book b
+        WHERE
+        b.book_id = #{bookId}
+    </select>
+
+    <select id="selectBookByIsbn13Code" parameterType="string" resultMap="BookMap">
+        SELECT
+        book_id, isbn13_code, title, author, CAST(pages AS SIGNED) AS pages, publisher, pub_date, cover_image_url
+        FROM
+        book
+        WHERE
+        isbn13_code = #{isbn13Code}
+    </select>
+
+    <!-- 책 목록 조회 -->
+    <select id="selectBooks" resultMap="BookMap">
+        SELECT
+            b.*
+        FROM
+            book b
+        <where>
+            <if test="keyword != null and keyword != ''">
+                (title LIKE CONCAT('%', #{keyword}, '%')
+                OR author LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+        ORDER BY
+            b.book_id DESC
+    </select>
+
     <select id="selectPublicReviewsByIsbn13" resultMap="PublicReviewMap">
         SELECT
-            sb.shelf_book_id,
-            u.nickname AS nickname,
-            sb.review,
-            sb.added_datetime
+        sb.shelf_book_id,
+        u.nickname AS nickname,
+        sb.review,
+        sb.added_datetime
         FROM shelf_book sb
         JOIN bookshelf bs ON bs.bookshelf_id = sb.bookshelf_id
         JOIN book b       ON b.book_id       = sb.book_id
@@ -101,5 +94,12 @@
         </if>
         ORDER BY sb.shelf_book_id DESC
         LIMIT #{limit}
+    </select>
+
+    <select id="existsBookByIsbn13Code" parameterType="string" resultType="boolean">
+        SELECT
+            EXISTS(
+                SELECT 1 FROM book WHERE isbn13_code = #{isbn13Code}
+            )
     </select>
 </mapper>

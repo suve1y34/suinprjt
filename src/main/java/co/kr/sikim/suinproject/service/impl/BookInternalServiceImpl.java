@@ -8,6 +8,8 @@ import co.kr.sikim.suinproject.service.BookInternalService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+
 @Service
 public class BookInternalServiceImpl implements BookInternalService {
 
@@ -38,7 +40,8 @@ public class BookInternalServiceImpl implements BookInternalService {
             b.setAuthor(author);
             b.setPages(pages);
             b.setPublisher(publisher);
-//            b.setPubDate(pubDate);
+            b.setPubDate(pubDate != null ? dateFormat(pubDate) : null);
+
             // INSERT + 생성키 바인딩
             bMapper.insertBook(b); // useGeneratedKeys=true, keyProperty="bookId", keyColumn="book_id"
         } else {
@@ -47,7 +50,7 @@ public class BookInternalServiceImpl implements BookInternalService {
             if (title != null && !title.isBlank())      { b.setTitle(title); dirty = true; }
             if (author != null && !author.isBlank())     { b.setAuthor(author); dirty = true; }
             if (publisher != null && !publisher.isBlank()){ b.setPublisher(publisher); dirty = true; }
-//            if (pubDate != null && !pubDate.isBlank())   { b.setPubDate(pubDate); dirty = true; }
+            if (pubDate != null && !pubDate.isBlank())   { b.setPubDate(dateFormat(pubDate)); dirty = true; }
             if (dirty) bMapper.updateBook(b);
         }
 
@@ -77,5 +80,10 @@ public class BookInternalServiceImpl implements BookInternalService {
         }
 
         return bMapper.selectBookByIsbn13Code(isbn13);
+    }
+
+    private LocalDate dateFormat(String date) {
+        LocalDate format = LocalDate.parse(date);
+        return format;
     }
 }

@@ -1,5 +1,6 @@
 package co.kr.sikim.suinproject.service.impl;
 
+import static co.kr.sikim.suinproject.common.SecurityUtils.currentUserIdOrThrow;
 import co.kr.sikim.suinproject.domain.Book;
 import co.kr.sikim.suinproject.domain.Bookshelf;
 import co.kr.sikim.suinproject.domain.ShelfItem;
@@ -16,9 +17,13 @@ import co.kr.sikim.suinproject.mapper.ShelfMapper;
 import co.kr.sikim.suinproject.service.BookInternalService;
 import co.kr.sikim.suinproject.service.ShelfService;
 import lombok.RequiredArgsConstructor;
+import org.jsoup.Jsoup;
+import org.jsoup.safety.Safelist;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.Year;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -34,6 +39,59 @@ public class ShelfServiceImpl implements ShelfService {
 
     private static final DateTimeFormatter DT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
+    // 책장에 대한 권한 체크
+    private void assertMyBookShelf(Long bookshelfId) {
+        Long uid = currentUserIdOrThrow();
+        if (!sbMapper.existsBookshelfOwnedByUser(bookshelfId, uid)) {
+            throw new AccessDeniedException("forbidden: not your shelf");
+        }
+    }
+
+    // 책장 책에 대한 권한 체크
+    private void assertMyShelfItem(Long shelfBookid) {
+        Long uid = currentUserIdOrThrow();
+        if (!sbMapper.existsShelfItemOwnedByUser(shelfBookid, uid)) {
+            throw new AccessDeniedException("forbidden: not your shelf item");
+        }
+    }
+
+    @Transactional
+    @Override
+    public ShelfItemResponse createShelfItem(ShelfItemAddRequest req) {
+        // 책장 존재 & 권한 체크
+        if (!sbMapper.existBookshelfById(req.getBookshelfId())) {
+            throw new IllegalArgumentException("bookshelf not found: " + req.getBookshelfId());
+        }
+        assertMyBookShelf(req.getBookshelfId());
+
+        // 입력 해석 및 정규화
+        Book book = resolveBookOrThrow(req.getBookId(), req.getIsbn13Code(),
+                req.getTitle(), req.getAuthor(), req.getPages(), req.getPublisher(), req.getPubDate());
+        assertNotDuplicate(req.getBookshelfId(), book.getBookId());
+
+        Integer pages = book.getPages(); // null 가능
+        int currentPage = clamp(req.getCurrentPage(), 0, pages);
+        String readingStatus = normalizeStatus(req.getReadingStatus(), currentPage, pages);
+
+
+        ShelfItem si = new ShelfItem();
+        si.setBookshelfId(req.getBookshelfId());
+        si.setBookId(book.getBookId());
+        si.setCurrentPage(currentPage);
+        si.setReadingStatus(readingStatus);
+        si.setMemo(sanitizeRichText(req.getMemo()));
+        si.setStartDate(parseDateOrNull(req.getStartDate())); // FE에서 세팅한 값
+        si.setEndDate(parseDateOrNull(req.getEndDate()));
+
+        si.setReview(sanitizeRichText(req.getReview()));
+        si.setReviewVisibility(normalizeReviewVisibility(req.getReviewVisibility()));
+        sbMapper.insertShelfItem(si);
+
+        // response 데이터 구성
+        ShelfItemJoinRow fresh = sbMapper.selectShelfItemById(si.getShelfBookId());
+        return toResponse(fresh);
+    }
+
     @Override
     public BookshelfResponse getShelf(Long userId) {
         Bookshelf bs = sbMapper.selectBookshelfById(userId);
@@ -42,6 +100,7 @@ public class ShelfServiceImpl implements ShelfService {
         if (!sbMapper.existBookshelfById(bs.getBookshelfId()))
             throw new IllegalArgumentException("bookshelf not found");
 
+        assertMyBookShelf(bs.getBookshelfId());
         BookshelfResponse res = new BookshelfResponse();
         res.setBookshelfId(bs.getBookshelfId());
         res.setUserId(bs.getUserId());
@@ -55,6 +114,8 @@ public class ShelfServiceImpl implements ShelfService {
         if (!sbMapper.existBookshelfById(cond.getBookshelfId())) {
             throw new IllegalArgumentException("bookshelf not found");
         }
+
+        assertMyBookShelf(cond.getBookshelfId());
 
         return sbMapper.selectShelfItemsByShelfId(cond).stream().map(si -> {
             ShelfItemResponse r = new ShelfItemResponse();
@@ -77,83 +138,22 @@ public class ShelfServiceImpl implements ShelfService {
         }).toList();
     }
 
-    @Transactional
-    @Override
-    public ShelfItemResponse createShelfItem(ShelfItemAddRequest req) {
-        if (!sbMapper.existBookshelfById(req.getBookshelfId())) {
-            throw new IllegalArgumentException("bookshelf not found: " + req.getBookshelfId());
-        }
-        if (!sbMapper.existBookshelfById(req.getBookshelfId())) {
-            throw new IllegalArgumentException("bookshelf not found: " + req.getBookshelfId());
-        }
 
-        Long bookId;
-        Book ensuredBook;
-
-        if (req.getBookId() != null) {
-            ensuredBook = bMapper.selectBookById(req.getBookId());
-            if (ensuredBook == null) throw new IllegalArgumentException("book not found: " + req.getBookId());
-            bookId = ensuredBook.getBookId();
-        } else if(req.getIsbn13Code() != null && !req.getIsbn13Code().isBlank()) {
-            ensuredBook = biService.upsertByIsbn13AndFillPagesIfMissing(
-                    req.getIsbn13Code(), req.getTitle(), req.getAuthor(), req.getPages(),
-                    req.getPublisher(), req.getPubDate()
-            );
-            bookId = ensuredBook.getBookId();
-        } else {
-            throw new IllegalArgumentException("bookId or isbn13Code is required");
-        }
-        if (sbMapper.existsBookshelfById(req.getBookshelfId(), bookId)) {
-            throw new IllegalArgumentException("already exists in shelf: bookId=" + req.getBookId());
-        }
-
-        Integer pages = ensuredBook.getPages(); // null 가능
-        int currentPage = clamp(req.getCurrentPage(), 0, pages);
-        String readingStatus = normalizeStatus(req.getReadingStatus(), currentPage, pages);
-
-
-        ShelfItem si = new ShelfItem();
-        si.setBookshelfId(req.getBookshelfId());
-        si.setBookId(bookId);
-        si.setCurrentPage(currentPage);
-        si.setReadingStatus(readingStatus);
-        si.setMemo(req.getMemo());
-        si.setStartDate(req.getStartDate()); // FE에서 세팅한 값
-        si.setEndDate(req.getEndDate());
-
-        si.setReview(req.getReview());
-        si.setReviewVisibility(normalizeReviewVisibility(req.getReviewVisibility()));
-        sbMapper.insertShelfItem(si);
-
-        ShelfItemResponse r = new ShelfItemResponse();
-        r.setShelfBookId(si.getShelfBookId());
-        r.setBookshelfId(si.getBookshelfId());
-        r.setBookId(bookId);
-        r.setTitle(ensuredBook.getTitle());
-        r.setAuthor(ensuredBook.getAuthor());
-        r.setPages(ensuredBook.getPages());
-        r.setCurrentPage(currentPage);
-        r.setStartDate(si.getStartDate());
-        r.setEndDate(si.getEndDate());
-        r.setReadingStatus(readingStatus);
-        r.setMemo(req.getMemo());
-        r.setMemoVisibility(si.getMemoVisibility());
-        r.setReview(req.getReview());
-        r.setReviewVisibility(req.getReviewVisibility());
-        return r;
-    }
 
     @Transactional
     @Override
     public ShelfItemResponse updateShelfItem(ShelfItemUpdateRequest req) {
+        // 현재 상태 로드 & 권한 체크
         ShelfItemJoinRow current = sbMapper.selectShelfItemById(req.getShelfBookId());
         if (current == null) {
             throw new IllegalArgumentException("shelf item not found: " + req.getShelfBookId());
         }
+        assertMyShelfItem(req.getShelfBookId());
 
         Book b = bMapper.selectBookById(current.getBookId());
         Integer pages = b != null ? b.getPages() : null;
 
+        // 정규화
         Integer nextPage = req.getCurrentPage() != null ? clamp(req.getCurrentPage(), 0, pages) : current.getCurrentPage();
         String nextStatus = req.getReadingStatus();
         if (nextStatus == null || nextStatus.isBlank()) {
@@ -164,11 +164,11 @@ public class ShelfServiceImpl implements ShelfService {
         toUpdate.setShelfBookId(req.getShelfBookId());
         toUpdate.setCurrentPage(nextPage);
         toUpdate.setReadingStatus(nextStatus); // null이면 미변경
-        toUpdate.setStartDate(req.getStartDate());
-        toUpdate.setEndDate(req.getEndDate());
+        toUpdate.setStartDate(parseDateOrNull(req.getStartDate()));
+        toUpdate.setEndDate(parseDateOrNull(req.getEndDate()));
 
         if (Boolean.TRUE.equals(req.getMemoChanged())) {
-            toUpdate.setMemo(req.getMemo()); // null이면 비우기
+            toUpdate.setMemo(sanitizeRichText(req.getMemo())); // null이면 비우기
             toUpdate.setMemoChanged(true);
         } else {
             toUpdate.setMemoChanged(false);
@@ -177,7 +177,7 @@ public class ShelfServiceImpl implements ShelfService {
         // 리뷰
         if (Boolean.TRUE.equals(req.getReviewChanged())) {
             toUpdate.setReviewChanged(true);
-            toUpdate.setReview(req.getReview());             // null → 비우기
+            toUpdate.setReview(sanitizeRichText(req.getReview()));             // null → 비우기
             if (req.getReviewVisibility() != null && !req.getReviewVisibility().isBlank()) {
                 toUpdate.setReviewVisibility(normalizeReviewVisibility(req.getReviewVisibility()));
             }
@@ -188,31 +188,15 @@ public class ShelfServiceImpl implements ShelfService {
             throw new IllegalStateException("update failed: " + req.getShelfBookId());
         }
 
-        // 갱신 후 응답용 조회 + Book 조인
+        // 갱신 후 응답용 조회 + response 데이터 구성
         ShelfItemJoinRow fresh = sbMapper.selectShelfItemById(req.getShelfBookId());
-        ShelfItemResponse r = new ShelfItemResponse();
-        r.setShelfBookId(fresh.getShelfBookId());
-        r.setBookshelfId(fresh.getBookshelfId());
-        r.setBookId(fresh.getBookId());
-        r.setTitle(fresh.getTitle());
-        r.setAuthor(fresh.getAuthor());
-        r.setPages(fresh.getPages());
-        r.setCurrentPage(fresh.getCurrentPage());
-        r.setStartDate(fresh.getStartDate());
-        r.setEndDate(fresh.getEndDate());
-        r.setReadingStatus(fresh.getReadingStatus());
-        r.setMemo(fresh.getMemo());
-        r.setMemoVisibility(fresh.getMemoVisibility());
-        r.setReview(fresh.getReview());
-        r.setReviewVisibility(fresh.getReviewVisibility());
-        r.setAddedDatetime(fresh.getAddedDatetime() != null ? fresh.getAddedDatetime().format(DT) : null);
-        r.setModifiedDatetime(fresh.getModifiedDatetime() != null ? fresh.getModifiedDatetime().format(DT) : null);
-        return r;
+        return toResponse(fresh);
     }
 
     @Transactional
     @Override
     public void deleteShelfItem(ShelfItemDeleteRequest req) {
+        assertMyShelfItem(req.getShelfBookId());
         int deleted = sbMapper.deleteShelfItemById(req.getShelfBookId());
         if (deleted == 0) {
             throw new IllegalArgumentException("shelf item not found: " + req.getShelfBookId());
@@ -246,19 +230,6 @@ public class ShelfServiceImpl implements ShelfService {
             // 총 페이지를 모르면 0이면 PLAN, >0이면 READING 가정
             return currentPage > 0 ? "READING" : "PLAN";
         }
-    }
-
-    private String normalizeStatusFilter(String status) {
-        if (status == null || status.isBlank()) return null;
-        String s = status.trim().toUpperCase();
-        if (Objects.equals(s, "PLAN") || Objects.equals(s, "READING") || Objects.equals(s, "DONE")) return s;
-        return null;
-    }
-
-    private String normalizeReviewVisibility(String v) {
-        if (v == null || v.isBlank()) return "PRIVATE";
-        String s = v.trim().toUpperCase();
-        return ("PUBLIC".equals(s)) ? "PUBLIC" : "PRIVATE";
     }
 
     @Override
@@ -299,5 +270,69 @@ public class ShelfServiceImpl implements ShelfService {
                 .collect(Collectors.toList());
 
         return new StatsResponse(statusRatio, monthly);
+    }
+
+    private String sanitizeRichText(String s) {
+        if (s == null) return null;
+        // XSS 리스크 최소화를 위해 HTML제거
+        return Jsoup.clean(s, Safelist.none());
+    }
+
+    private Book resolveBookOrThrow(Long bookId,
+                                    String isbn13,
+                                    String title,
+                                    String author,
+                                    Integer pages,
+                                    String publisher,
+                                    String pubDate) {
+        if (bookId != null) {
+            Book ensured = bMapper.selectBookById(bookId);
+            if (ensured == null) throw new IllegalArgumentException("book not found: " + bookId);
+            return ensured;
+        }
+        if (isbn13 != null && !isbn13.isBlank()) {
+            return biService.upsertByIsbn13AndFillPagesIfMissing(isbn13, title, author, pages, publisher, pubDate);
+        }
+        throw new IllegalArgumentException("bookId or isbn13Code is required");
+    }
+
+    private void assertNotDuplicate(Long bookshelfId, Long bookId) {
+        if (sbMapper.existsBookshelfById(bookshelfId, bookId)) {
+            throw new IllegalArgumentException("already exists in shelf: bookId=" + bookId);
+        }
+    }
+
+    private String normalizeReviewVisibility(String v) {
+        if (v == null || v.isBlank()) return "PRIVATE";
+        String s = v.trim().toUpperCase();
+        return "PUBLIC".equals(s) ? "PUBLIC" : "PRIVATE";
+    }
+
+    private LocalDate parseDateOrNull(String yyyyMmDd) {
+        if (yyyyMmDd == null) return null;
+        String s = yyyyMmDd.trim();
+        if (s.isEmpty()) return null;
+        return LocalDate.parse(s); // ISO-8601 yyyy-MM-dd
+    }
+
+    private ShelfItemResponse toResponse(ShelfItemJoinRow si) {
+        ShelfItemResponse r = new ShelfItemResponse();
+        r.setShelfBookId(si.getShelfBookId());
+        r.setBookshelfId(si.getBookshelfId());
+        r.setBookId(si.getBookId());
+        r.setTitle(si.getTitle());
+        r.setAuthor(si.getAuthor());
+        r.setPages(si.getPages());
+        r.setCurrentPage(si.getCurrentPage());
+        r.setStartDate(si.getStartDate());
+        r.setEndDate(si.getEndDate());
+        r.setReadingStatus(si.getReadingStatus());
+        r.setMemo(si.getMemo());
+        r.setMemoVisibility(si.getMemoVisibility());
+        r.setReview(si.getReview());
+        r.setReviewVisibility(si.getReviewVisibility());
+        r.setAddedDatetime(si.getAddedDatetime() != null ? si.getAddedDatetime().format(DT) : null);
+        r.setModifiedDatetime(si.getModifiedDatetime() != null ? si.getModifiedDatetime().format(DT) : null);
+        return r;
     }
 }

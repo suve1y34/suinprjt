@@ -9,6 +9,26 @@
         <result property="lastSyncedDatetime" column="last_synced_datetime"/>
     </resultMap>
 
+    <insert id="insertAladinCache" parameterType="co.kr.sikim.suinproject.domain.AladinCache">
+        INSERT INTO aladin_cache (isbn13_code, raw_json, last_synced_datetime)
+        VALUES (#{isbn13Code}, #{rawJson}, NOW())
+    </insert>
+
+    <insert id="upsertAladinCache">
+        INSERT INTO aladin_cache (isbn13_code, raw_json, last_synced_datetime)
+        VALUES (#{isbn13Code}, #{rawJson}, NOW())
+        ON DUPLICATE KEY UPDATE
+        raw_json = VALUES(raw_json),
+        last_synced_datetime = NOW()
+    </insert>
+
+    <update id="updateAladinCache" parameterType="co.kr.sikim.suinproject.domain.AladinCache">
+        UPDATE aladin_cache
+        SET raw_json = #{rawJson},
+        last_synced_datetime = NOW()
+        WHERE isbn13_code = #{isbn13Code}
+    </update>
+
     <select id="selectAladinCacheByIsbn13Code" parameterType="string" resultMap="AladinCacheMap">
         SELECT isbn13_code, raw_json, last_synced_datetime
         FROM aladin_cache
@@ -20,24 +40,4 @@
         FROM aladin_cache
         WHERE isbn13_code = #{isbn13Code}
     </select>
-
-    <insert id="insertAladinCache" parameterType="co.kr.sikim.suinproject.domain.AladinCache">
-        INSERT INTO aladin_cache (isbn13_code, raw_json, last_synced_datetime)
-        VALUES (#{isbn13Code}, #{rawJson}, NOW())
-    </insert>
-
-    <update id="updateAladinCache" parameterType="co.kr.sikim.suinproject.domain.AladinCache">
-        UPDATE aladin_cache
-        SET raw_json = #{rawJson},
-            last_synced_datetime = NOW()
-        WHERE isbn13_code = #{isbn13Code}
-    </update>
-
-    <insert id="upsertAladinCache">
-        INSERT INTO aladin_cache (isbn13_code, raw_json, last_synced_datetime)
-        VALUES (#{isbn13Code}, #{rawJson}, NOW())
-        ON DUPLICATE KEY UPDATE
-        raw_json = VALUES(raw_json),
-        last_synced_datetime = NOW()
-    </insert>
 </mapper>

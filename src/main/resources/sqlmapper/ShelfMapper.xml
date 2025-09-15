@@ -29,43 +29,6 @@
         <result column="created_datetime"    property="createdDatetime"/>
     </resultMap>
 
-    <select id="selectBookshelfById" resultMap="ShelfMap">
-        SELECT bookshelf_id, user_id, created_datetime
-        FROM bookshelf
-        WHERE user_id = #{userId}
-    </select>
-
-    <select id="countShelfItems" resultType="int">
-        SELECT
-        COUNT(*)
-        FROM
-        shelf_book
-        WHERE
-        bookshelf_id = #{bookshelfId}
-    </select>
-
-    <select id="existBookshelfById" resultType="boolean">
-        SELECT
-        EXISTS(
-        SELECT 1 FROM bookshelf WHERE bookshelf_id = #{bookshelfId}
-        )
-    </select>
-
-    <select id="countShelfBooksByStatus" resultType="int">
-        SELECT
-            COUNT(*)
-        FROM
-            shelf_book sb
-        JOIN
-            bookshelf s
-        ON
-            sb.bookshelf_id = s.bookshelf_id
-        WHERE
-            s.user_id = #{userId}
-        AND
-            sb.reading_status = #{status}
-    </select>
-
     <insert id="insertBookshelf" parameterType="co.kr.sikim.suinproject.domain.Bookshelf"
             useGeneratedKeys="true" keyProperty="bookshelfId">
         INSERT INTO bookshelf (user_id) VALUES (#{userId})
@@ -73,18 +36,18 @@
 
     <insert id="insertShelfItem" parameterType="co.kr.sikim.suinproject.domain.ShelfItem">
         INSERT INTO shelf_book (
-            bookshelf_id, book_id, current_page, start_date, end_date, reading_status, memo, memo_visibility, review, review_visibility
+        bookshelf_id, book_id, current_page, start_date, end_date, reading_status, memo, memo_visibility, review, review_visibility
         )
         VALUES (
-            #{bookshelfId},
-            #{bookId},
-            COALESCE(#{currentPage}, 0),
-            #{startDate}, #{endDate}
-            COALESCE(#{readingStatus}, 'PLAN'),
-            #{memo},
-            COALESCE(#{memoVisibility}, 'PRIVATE'),
-            #{review},
-            COALESCE(#{reviewVisibility}, 'PRIVATE')
+        #{bookshelfId},
+        #{bookId},
+        COALESCE(#{currentPage}, 0),
+        #{startDate}, #{endDate}
+        COALESCE(#{readingStatus}, 'PLAN'),
+        #{memo},
+        COALESCE(#{memoVisibility}, 'PRIVATE'),
+        #{review},
+        COALESCE(#{reviewVisibility}, 'PRIVATE')
         )
     </insert>
 
@@ -110,48 +73,64 @@
         DELETE FROM shelf_book WHERE shelf_book_id = #{shelfBookId}
     </delete>
 
-    <select id="existsBookshelfById" resultType="boolean">
-        SELECT EXISTS(
-            SELECT 1 FROM shelf_book
-            WHERE bookshelf_id = #{bookshelfId}
-            AND book_id = #{bookId}
-        )
+    <select id="selectBookshelfById" resultMap="ShelfMap">
+        SELECT bookshelf_id, user_id, created_datetime
+        FROM bookshelf
+        WHERE user_id = #{userId}
     </select>
 
-    <select id="countShelfItemsByBookshelfId" resultType="int">
+    <select id="selectShelfItemById" resultMap="ShelfItemMap">
         SELECT
-            COUNT(*)
+        sb.shelf_book_id,
+        sb.bookshelf_id,
+        sb.book_id,
+        sb.current_page,
+        sb.reading_status,
+        sb.start_date,
+        sb.end_date,
+        sb.memo,
+        sb.memo_visibility,
+        sb.review,
+        sb.review_visibility,
+        sb.added_datetime,
+        sb.modified_datetime,
+        b.title, b.author, b.pages,
+        b.cover_image_url
         FROM
-            shelf_book
+        shelf_book sb
+        JOIN
+        book b
+        ON
+        b.book_id = sb.book_id
         WHERE
-            bookshelf_id = #{bookshelfId}
+        sb.shelf_book_id = #{shelfBookId}
     </select>
 
     <select id="selectShelfItemsByShelfId" resultMap="ShelfItemMap">
         SELECT
-            sb.shelf_book_id,
-            sb.bookshelf_id,
-            sb.book_id,
-            sb.current_page,
-            sb.reading_status,
-            sb.start_date,
-            sb.end_date,
-            sb.memo,
-            sb.memo_visibility,
-            sb.review,
-            sb.review_visibility,
-            sb.added_datetime,
-            sb.modified_datetime,
-            b.title, b.author, b.pages,
-            b.cover_image_url
+        sb.shelf_book_id,
+        sb.bookshelf_id,
+        sb.book_id,
+        sb.current_page,
+        sb.reading_status,
+        sb.start_date,
+        sb.end_date,
+        sb.memo,
+        sb.memo_visibility,
+        sb.review,
+        sb.review_visibility,
+        sb.added_datetime,
+        sb.modified_datetime,
+        b.title, b.author, b.pages,
+        b.cover_image_url
         FROM
-            shelf_book sb
+        shelf_book sb
         JOIN
-            book b
+        book b
         ON
-            b.book_id = sb.book_id
+        b.book_id = sb.book_id
         WHERE
-            sb.bookshelf_id = #{bookshelfId}
+        sb.bookshelf_id = #{bookshelfId}
         <if test="status != null and status != ''">
             AND sb.reading_status = #{status}
         </if>
@@ -181,68 +160,106 @@
         </choose>
     </select>
 
-    <select id="selectShelfItemById" resultMap="ShelfItemMap">
-        SELECT
-            sb.shelf_book_id,
-            sb.bookshelf_id,
-            sb.book_id,
-            sb.current_page,
-            sb.reading_status,
-            sb.start_date,
-            sb.end_date,
-            sb.memo,
-            sb.memo_visibility,
-            sb.review,
-            sb.review_visibility,
-            sb.added_datetime,
-            sb.modified_datetime,
-            b.title, b.author, b.pages,
-            b.cover_image_url
-        FROM
-            shelf_book sb
-        JOIN
-            book b
-        ON
-            b.book_id = sb.book_id
-        WHERE
-            sb.shelf_book_id = #{shelfBookId}
-    </select>
-
     <!-- 상태별 개수 -->
     <select id="selectStatusCountsByUserId" parameterType="map" resultType="map">
         SELECT
-            sb.reading_status AS status,
-            COUNT(*) AS cnt
+        sb.reading_status AS status,
+        COUNT(*) AS cnt
         FROM
-            shelf_book sb
+        shelf_book sb
         JOIN
-            bookshelf bs
+        bookshelf bs
         ON
-            bs.bookshelf_id = sb.bookshelf_id
+        bs.bookshelf_id = sb.bookshelf_id
         WHERE
-            bs.user_id = #{userId}
+        bs.user_id = #{userId}
         GROUP BY
-            sb.reading_status
+        sb.reading_status
     </select>
 
     <!-- 월별(완독) 개수: end_date 기준, 연도 필터(옵션) -->
     <select id="selectMonthlyDoneCountsByUserId" parameterType="map" resultType="map">
         SELECT
-            YEAR(sb.end_date) AS y,
-            MONTH(sb.end_date) AS m,
-            COUNT(*) AS cnt
+        YEAR(sb.end_date) AS y,
+        MONTH(sb.end_date) AS m,
+        COUNT(*) AS cnt
         FROM shelf_book sb
         JOIN bookshelf bs
         ON bs.bookshelf_id = sb.bookshelf_id
         WHERE
-            bs.user_id = #{userId}
-            AND
-            sb.end_date IS NOT NULL
-            AND
-            (#{year} IS NULL OR YEAR(sb.end_date) = #{year})
+        bs.user_id = #{userId}
+        AND
+        sb.end_date IS NOT NULL
+        AND
+        (#{year} IS NULL OR YEAR(sb.end_date) = #{year})
         GROUP BY
-            YEAR(sb.end_date), MONTH(sb.end_date)
+        YEAR(sb.end_date), MONTH(sb.end_date)
         ORDER BY
-            y, m
+        y, m
+    </select>
+
+    <select id="countShelfItems" resultType="int">
+        SELECT
+        COUNT(*)
+        FROM
+        shelf_book
+        WHERE
+        bookshelf_id = #{bookshelfId}
+    </select>
+
+    <select id="countShelfBooksByStatus" resultType="int">
+        SELECT
+        COUNT(*)
+        FROM
+        shelf_book sb
+        JOIN
+        bookshelf s
+        ON
+        sb.bookshelf_id = s.bookshelf_id
+        WHERE
+        s.user_id = #{userId}
+        AND
+        sb.reading_status = #{status}
+    </select>
+
+    <select id="existsBookshelfById" resultType="boolean">
+        SELECT EXISTS(
+        SELECT 1 FROM shelf_book
+        WHERE bookshelf_id = #{bookshelfId}
+        AND book_id = #{bookId}
+        )
+    </select>
+
+    <select id="existBookshelfById" resultType="boolean">
+        SELECT
+        EXISTS(
+        SELECT 1 FROM bookshelf WHERE bookshelf_id = #{bookshelfId}
+        )
+    </select>
+
+    <select id="existsBookshelfOwnedByUser" resultType="boolean">
+        SELECT
+            CASE WHEN COUNT(*) > 0 THEN TRUE ELSE FALSE END
+        FROM
+            bookshelf
+        WHERE
+            bookshelf_id = #{bookshelfId}
+        AND
+            user_id = #{userId}
+    </select>
+
+    <select id="existsShelfItemOwnedByUser" resultType="boolean">
+        SELECT
+            CASE WHEN COUNT(*) > 0 THEN TRUE ELSE FALSE END
+        FROM
+            shelf_book sb
+        JOIN
+            bookshelf b
+        ON
+            b.bookshelf_id = sb.bookshelf_id
+        WHERE
+            sb.shelf_book_id = #{shelfBookId}
+        AND
+            b.user_id        = #{userId}
     </select>
 </mapper>

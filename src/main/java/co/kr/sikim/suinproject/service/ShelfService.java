@@ -11,12 +11,13 @@ import co.kr.sikim.suinproject.dto.shelfitem.ShelfItemUpdateRequest;
 import java.util.List;
 
 public interface ShelfService {
+    ShelfItemResponse createShelfItem(ShelfItemAddRequest req); // 책 추가
+
+    List<ShelfItemResponse> listShelfItems(ShelfItemSearchCond cond);
     BookshelfResponse getShelf(Long userId);
-    ShelfItemResponse createShelfItem(ShelfItemAddRequest req);
+    int countShelfBooksByStatus(Long userId, String status);
+    StatsResponse getShelfStats(Long userId, Integer year);
+
     ShelfItemResponse updateShelfItem(ShelfItemUpdateRequest req);
     void deleteShelfItem(ShelfItemDeleteRequest req);
-    List<ShelfItemResponse> listShelfItems(ShelfItemSearchCond cond);
-    int countShelfBooksByStatus(Long userId, String status);
-
-    StatsResponse getShelfStats(Long userId, Integer year);
 }

@@ -17,7 +17,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BookServiceImpl implements BookService {
     private final BookMapper bMapper;
-    private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final DateTimeFormatter DT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     @Override
     public List<BookResponse> listBooks(String keyword) {
@@ -46,8 +46,8 @@ public class BookServiceImpl implements BookService {
             PublicReviewResponse d = new PublicReviewResponse();
             d.setNickname(r.getNickname());
             d.setReview(r.getReview());
-//            d.setAddedDatetime(r.getAddedDatetime()
-//                    != null ? r.getAddedDatetime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) : null);
+            d.setAddedDatetime(r.getAddedDatetime()
+                    != null ? r.getAddedDatetime().format(DT) : null);
             return d;
         }).toList();
 
@@ -69,7 +69,7 @@ public class BookServiceImpl implements BookService {
         dto.setAuthor(b.getAuthor());
         dto.setPages(b.getPages());
         dto.setPublisher(b.getPublisher());
-        dto.setPubDate(b.getPubDate() != null ? b.getPubDate().format(DATE) : null);
+        dto.setPubDate(b.getPubDate() != null ? b.getPubDate().format(DT) : null);
         return dto;
     }
 }
