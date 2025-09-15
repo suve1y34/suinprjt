@@ -21,13 +21,13 @@ public class ShelfItemAddRequest {
     @Size(max = 13)
     private String isbn13Code;
 
-    @Pattern(regexp = "PLAN|READING|DONE", message = "상태값 오류")
     private String title;
     private String author;
     private Integer pages;
     private String publisher;
     private String pubDate;
 
+    @Pattern(regexp = "PLAN|READING|DONE", message = "상태값 오류")
     private String readingStatus;
 
     @Min(0)

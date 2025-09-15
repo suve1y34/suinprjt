@@ -7,6 +7,7 @@
         <id     column="shelf_book_id"      property="shelfBookId"/>
         <result column="bookshelf_id"       property="bookshelfId"/>
         <result column="book_id"            property="bookId"/>
+        <result column="isbn13_code"        property="isbn13Code"/>
         <result column="title"              property="title"/>
         <result column="author"             property="author"/>
         <result column="pages"              property="pages"/>
@@ -34,7 +35,10 @@
         INSERT INTO bookshelf (user_id) VALUES (#{userId})
     </insert>
 
-    <insert id="insertShelfItem" parameterType="co.kr.sikim.suinproject.domain.ShelfItem">
+    <insert id="insertShelfItem" parameterType="co.kr.sikim.suinproject.domain.ShelfItem"
+            useGeneratedKeys="true"
+            keyProperty="shelfBookId"
+            keyColumn="shelf_book_id">
         INSERT INTO shelf_book (
         bookshelf_id, book_id, current_page, start_date, end_date, reading_status, memo, memo_visibility, review, review_visibility
         )
@@ -42,7 +46,7 @@
         #{bookshelfId},
         #{bookId},
         COALESCE(#{currentPage}, 0),
-        #{startDate}, #{endDate}
+        #{startDate}, #{endDate},
         COALESCE(#{readingStatus}, 'PLAN'),
         #{memo},
         COALESCE(#{memoVisibility}, 'PRIVATE'),
@@ -95,7 +99,8 @@
         sb.added_datetime,
         sb.modified_datetime,
         b.title, b.author, b.pages,
-        b.cover_image_url
+        b.cover_image_url,
+        b.isbn13_code
         FROM
         shelf_book sb
         JOIN
@@ -122,7 +127,8 @@
         sb.added_datetime,
         sb.modified_datetime,
         b.title, b.author, b.pages,
-        b.cover_image_url
+        b.cover_image_url,
+        b.isbn13_code
         FROM
         shelf_book sb
         JOIN

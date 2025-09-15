@@ -73,6 +73,9 @@ public class ShelfServiceImpl implements ShelfService {
         int currentPage = clamp(req.getCurrentPage(), 0, pages);
         String readingStatus = normalizeStatus(req.getReadingStatus(), currentPage, pages);
 
+        if ("DONE".equals(readingStatus)) {
+            currentPage = pages;
+        }
 
         ShelfItem si = new ShelfItem();
         si.setBookshelfId(req.getBookshelfId());
@@ -122,6 +125,7 @@ public class ShelfServiceImpl implements ShelfService {
             r.setShelfBookId(si.getShelfBookId());
             r.setBookshelfId(si.getBookshelfId());
             r.setBookId(si.getBookId());
+            r.setIsbn13Code(si.getIsbn13Code());
             r.setTitle(si.getTitle());
             r.setAuthor(si.getAuthor());
             r.setPages(si.getPages());
@@ -131,6 +135,9 @@ public class ShelfServiceImpl implements ShelfService {
             r.setMemoVisibility(si.getMemoVisibility());
             r.setReview(si.getReview());
             r.setReviewVisibility(si.getReviewVisibility());
+            r.setStartDate(formatDateOrNull(si.getStartDate()));
+            r.setEndDate(formatDateOrNull(si.getEndDate()));
+            r.setCoverImageUrl(si.getCoverImageUrl());
 
             r.setAddedDatetime(si.getAddedDatetime() != null ? si.getAddedDatetime().format(DT) : null);
             r.setModifiedDatetime(si.getModifiedDatetime() != null ? si.getModifiedDatetime().format(DT) : null);
@@ -158,6 +165,10 @@ public class ShelfServiceImpl implements ShelfService {
         String nextStatus = req.getReadingStatus();
         if (nextStatus == null || nextStatus.isBlank()) {
             nextStatus = normalizeStatus(current.getReadingStatus(), nextPage, pages);
+        }
+
+        if ("DONE".equals(nextStatus)) {
+            nextPage = pages;
         }
 
         ShelfItem toUpdate = new ShelfItem();
@@ -315,6 +326,10 @@ public class ShelfServiceImpl implements ShelfService {
         return LocalDate.parse(s); // ISO-8601 yyyy-MM-dd
     }
 
+    private String formatDateOrNull(LocalDate date) {
+        return (date == null) ? null : date.format(DateTimeFormatter.ISO_LOCAL_DATE);
+    }
+
     private ShelfItemResponse toResponse(ShelfItemJoinRow si) {
         ShelfItemResponse r = new ShelfItemResponse();
         r.setShelfBookId(si.getShelfBookId());
@@ -324,8 +339,8 @@ public class ShelfServiceImpl implements ShelfService {
         r.setAuthor(si.getAuthor());
         r.setPages(si.getPages());
         r.setCurrentPage(si.getCurrentPage());
-        r.setStartDate(si.getStartDate());
-        r.setEndDate(si.getEndDate());
+        r.setStartDate(formatDateOrNull(si.getStartDate()));
+        r.setEndDate(formatDateOrNull(si.getEndDate()));
         r.setReadingStatus(si.getReadingStatus());
         r.setMemo(si.getMemo());
         r.setMemoVisibility(si.getMemoVisibility());

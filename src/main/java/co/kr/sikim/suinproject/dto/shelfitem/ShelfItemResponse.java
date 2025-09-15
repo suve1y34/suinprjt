@@ -12,13 +12,15 @@ public class ShelfItemResponse {
     private Long bookshelfId;
     private Long bookId;
 
+    private String isbn13Code;
+
     private String title;
     private String author;
     private Integer pages;
     private String coverImageUrl;
 
-    private LocalDate startDate;
-    private LocalDate endDate;
+    private String startDate;
+    private String endDate;
 
     private Integer currentPage;
     private String readingStatus;

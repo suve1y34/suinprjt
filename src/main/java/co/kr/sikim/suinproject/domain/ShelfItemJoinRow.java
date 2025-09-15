@@ -10,6 +10,9 @@ public class ShelfItemJoinRow {
     private Long shelfBookId;
     private Long bookshelfId;
     private Long bookId;
+
+    private String isbn13Code;
+
     private String title;
     private String author;
     private Integer pages;
