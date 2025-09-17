@@ -16,7 +16,8 @@ import java.util.List;
 
 @Tag(name = "Aladin", description = "책 검색 API")
 @RestController
-@RequestMapping("/api/search")
+//@RequestMapping("/api/search")
+@RequestMapping("/search")
 @RequiredArgsConstructor
 public class SearchController {
     private final AladinService aSer;

@@ -15,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Optional;
 
@@ -25,31 +27,38 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     private final JwtTokenProvider jwtTokenProvider;
     private final RedirectWhitelistProperties whitelist;
 
-    private static final String DEFAULT_REDIRECT = "http://localhost:9217/login/callback";
+    // 해시 라우트 기준 콜백(기본값)
+    private String fallbackRedirect() {
+        return whitelist.getRedirectWhitelist().stream()
+                .findFirst()
+                .map(base -> base + "/#/login/callback")
+                .orElse("http://ckk122.cafe24.com/#/login/callback");
+    }
 
     @Override
     @Transactional
-    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
+    public void onAuthenticationSuccess(HttpServletRequest request,
+                                        HttpServletResponse response,
                                         Authentication authentication) throws IOException {
+
+        String requested = request.getParameter("redirect_uri");
+        String redirect = (requested != null && whitelist.isAllowed(requested))
+                ? requested
+                : fallbackRedirect(); // 반드시 해시 포함 콜백
+
         String email = null;
         String name  = null;
 
         Object principal = authentication.getPrincipal();
-
         if (principal instanceof OidcUser oidc) {
-            // OIDC 경로: 표준 클레임 활용
             email = oidc.getEmail();
-
-            // getAttribute는 제네릭이라 String으로 직접 받기
             String fullName  = oidc.getFullName();
-            String nameAttr  = oidc.getAttribute("name");      // String
+            String nameAttr  = oidc.getAttribute("name");
             String givenName = oidc.getGivenName();
-
             name = firstNonBlank(fullName, nameAttr, givenName, email, "");
         } else if (principal instanceof OAuth2User ou) {
             @SuppressWarnings("unchecked")
             Map<String, Object> unified = (Map<String, Object>) ou.getAttributes().get("unified");
-
             if (unified != null) {
                 email = toStr(unified.get("email"));
                 name  = toStr(unified.get("name"));
@@ -59,26 +68,21 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         }
 
         if (isBlank(email)) {
-            failureRedirect(response, request, "email_consent_required");
+            String target = appendParamRespectingHash(redirect, "error", "email_consent_required");
+            getRedirectStrategy().sendRedirect(request, response, target);
             return;
         }
 
         User user = authSer.upsertOAuthUser(email, name);
         String token = jwtTokenProvider.generateToken(user.getUserId(), user.getUserEmail());
 
-        String redirect = Optional.ofNullable(request.getParameter("redirect_uri"))
-                .filter(uri -> whitelist.isAllowed(uri))
-                .orElse(DEFAULT_REDIRECT);
-
-        String target = UriComponentsBuilder.fromUriString(redirect)
-                .queryParam("token", token)
-                .build(true)
-                .toUriString();
-
+        // ★ 해시를 인식해서 token을 fragment query에 붙인다
+        String target = appendParamRespectingHash(redirect, "token", token);
         getRedirectStrategy().sendRedirect(request, response, target);
     }
 
-    /* ---- 유틸 ---- */
+    /* -------- 유틸 -------- */
+
     private static boolean isBlank(String s) {
         return s == null || s.isBlank();
     }
@@ -90,15 +94,28 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         return null;
     }
 
-    private void failureRedirect(HttpServletResponse response, HttpServletRequest request, String code) throws IOException {
-        String redirect = Optional.ofNullable(request.getParameter("redirect_uri"))
-                .filter(uri -> whitelist.isAllowed(uri))
-                .orElse(DEFAULT_REDIRECT);
+    /**
+     * redirect가 해시(#)를 포함하면 파라미터를 해시 뒤(fragment)의 쿼리에 붙인다.
+     * 예)
+     *   http://host/#/login/callback
+     *     -> http://host/#/login/callback?key=val
+     *   http://host/#/login/callback?x=1
+     *     -> http://host/#/login/callback?x=1&key=val
+     * 해시가 없으면 일반 쿼리스트링으로 붙인다.
+     */
+    private static String appendParamRespectingHash(String redirect, String key, String value) {
+        String encKey = URLEncoder.encode(key, StandardCharsets.UTF_8);
+        String encVal = URLEncoder.encode(value, StandardCharsets.UTF_8);
 
-        String target = UriComponentsBuilder.fromUriString(redirect)
-                .queryParam("error", code)
-                .build(true)
-                .toUriString();
-        getRedirectStrategy().sendRedirect(request, response, target);
+        int hash = redirect.indexOf('#');
+        if (hash >= 0) {
+            String base = redirect.substring(0, hash);        // http://host
+            String fragment = redirect.substring(hash + 1);   // e.g. /login/callback or /login/callback?x=1
+            String sep = (fragment.contains("?") ? "&" : "?");
+            return base + "#" + fragment + sep + encKey + "=" + encVal;
+        } else {
+            String sep = (redirect.contains("?") ? "&" : "?");
+            return redirect + sep + encKey + "=" + encVal;
+        }
     }
 }

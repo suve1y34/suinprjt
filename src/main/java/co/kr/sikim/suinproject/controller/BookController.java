@@ -14,7 +14,8 @@ import java.util.List;
 
 @Tag(name = "Books", description = "책 정보 API")
 @RestController
-@RequestMapping("/api/books")
+//@RequestMapping("/api/books")
+@RequestMapping("/books")
 @RequiredArgsConstructor
 public class BookController {
 

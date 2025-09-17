@@ -46,6 +46,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGeneric(Exception ex) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.fail(500, "일시적인 오류가 발생했습니다."));
+                .body(ApiResponse.fail(500, ex.getMessage() + "일시적인 오류가 발생했습니다."));
     }
 }

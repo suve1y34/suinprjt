@@ -23,7 +23,8 @@ import java.util.Map;
 
 @Tag(name = "Shelves", description = "책장 정보 API")
 @RestController
-@RequestMapping("/api/shelves/books")
+//@RequestMapping("/api/shelves/books")
+@RequestMapping("/shelves/books")
 @RequiredArgsConstructor
 public class ShelfController {
 

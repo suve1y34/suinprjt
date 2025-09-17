@@ -52,7 +52,7 @@ public class AuthServiceImpl implements AuthService {
         u.setUserEmail(email);
         u.setUserPassword(pwEncoder.encode("OAUTH2-" + UUID.randomUUID()));
         u.setUserName((name == null || name.isBlank()) ? email : name);
-        u.setNickname(null);
+        u.setNickname(allocNickname(email));
         u.setCreatedDatetime(LocalDateTime.now());
         u.setModifiedDatetime(LocalDateTime.now());
         uMapper.insertUser(u);
