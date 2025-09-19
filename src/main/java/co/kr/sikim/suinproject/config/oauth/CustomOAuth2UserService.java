@@ -13,7 +13,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     @Override
     public OAuth2User loadUser(OAuth2UserRequest req) {
         OAuth2User oAuth2User = super.loadUser(req);
-        String registrationId = req.getClientRegistration().getRegistrationId(); // google|kakao|naver
+        String registrationId = req.getClientRegistration().getRegistrationId(); // google
         Map<String, Object> attrs = oAuth2User.getAttributes();
 
         OAuth2UserInfo info = switch (registrationId) {

@@ -1,6 +1,7 @@
 package co.kr.sikim.suinproject.mapper;
 
 import co.kr.sikim.suinproject.domain.Bookshelf;
+import co.kr.sikim.suinproject.domain.DoneBookRow;
 import co.kr.sikim.suinproject.domain.ShelfItem;
 import co.kr.sikim.suinproject.domain.ShelfItemJoinRow;
 import co.kr.sikim.suinproject.dto.shelf.ShelfItemSearchCond;
@@ -35,4 +36,8 @@ public interface ShelfMapper {
     boolean existBookshelfById(@Param("bookshelfId") Long bookshelfId);
     boolean existsBookshelfOwnedByUser(Long bookshelfId, Long userId);
     boolean existsShelfItemOwnedByUser(Long shelfBookId, Long userId);
+
+    List<DoneBookRow> selectDoneBooksByMonth(@Param("userId") Long userId,
+                                             @Param("year") Integer year,
+                                             @Param("month") Integer month);
 }

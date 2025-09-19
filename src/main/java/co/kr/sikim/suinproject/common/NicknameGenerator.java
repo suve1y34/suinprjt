@@ -62,21 +62,21 @@ public class NicknameGenerator {
 
     // 전략 A: 결정형 해시 — 같은 시드면 같은 결과
     private static String hashedPair(String seed) {
-        int a = idxFromHash(seed, "A");
-        int b = idxFromHash(seed, "B");
+        int a = Math.floorMod(idxFromHash(seed, "A"), ADJ.length);
+        int b = Math.floorMod(idxFromHash(seed, "B"), NOUN.length);
         return ADJ[a] + " " + NOUN[b];
     }
 
     // 전략 B: 두운(초성 일치)
     private static String alliterationPair(String seed) {
-        int ni = idxFromHash(seed, "N") % NOUN.length;
+        int ni = Math.floorMod(idxFromHash(seed, "N"), NOUN.length);
         String noun = NOUN[ni];
         char ic = initialConsonant(noun);
         List<String> pool = adjByInitial(ic);
         if (pool.isEmpty()) { // 없으면 일반 해시
             return hashedPair(seed);
         }
-        int ai = idxFromHash(seed, "A2") % pool.size();
+        int ai = Math.floorMod(idxFromHash(seed, "A2"), pool.size());
         return pool.get(ai) + " " + noun;
     }
 
@@ -103,7 +103,8 @@ public class NicknameGenerator {
         List<String> pool = adjByInitial(ic);
         // 다른 형용사로 몇 번 더
         for (int i = 0; i < Math.min(20, pool.size()); i++) {
-            String cand = pool.get((idxFromHash(seed, "R"+i) + i) % pool.size()) + " " + noun;
+            int idx = Math.floorMod(idxFromHash(seed, "R" + i) + i, pool.size());
+            String cand = pool.get(idx) + " " + noun;
             cand = sanitize(cand);
             if (isOk(cand) && !existsCheck.test(cand)) return cand;
         }
@@ -114,7 +115,8 @@ public class NicknameGenerator {
         String[] sp = base.split(" ");
         String adj = sp[0], noun = sp.length > 1 ? sp[1] : NOUN[0];
         for (int i = 0; i < 30; i++) {
-            String noun2 = NOUN[(idxFromHash(seed, "N2"+i) + i) % NOUN.length];
+            int idx = Math.floorMod(idxFromHash(seed, "N2" + i) + i, NOUN.length);
+            String noun2 = NOUN[idx];
             if (noun2.equals(noun)) continue;
             String cand = adj + " " + (noun + noun2); // 공백 그대로 두고 UI에서 한 칸 유지
             cand = sanitize(cand);

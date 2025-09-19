@@ -30,6 +30,15 @@
         <result column="created_datetime"    property="createdDatetime"/>
     </resultMap>
 
+    <resultMap id="DoneBookRowMap" type="co.kr.sikim.suinproject.domain.DoneBookRow">
+        <result column="date_str"      property="dateStr"/>
+        <result column="shelfBookId"   property="shelfBookId"/>
+        <result column="bookId"        property="bookId"/>
+        <result column="title"         property="title"/>
+        <result column="coverImageUrl" property="coverImageUrl"/>
+        <result column="isbn13Code"    property="isbn13Code"/>
+    </resultMap>
+
     <insert id="insertBookshelf" parameterType="co.kr.sikim.suinproject.domain.Bookshelf"
             useGeneratedKeys="true" keyProperty="bookshelfId">
         INSERT INTO bookshelf (user_id) VALUES (#{userId})
@@ -267,5 +276,28 @@
             sb.shelf_book_id = #{shelfBookId}
         AND
             b.user_id        = #{userId}
+    </select>
+
+    <select id="selectDoneBooksByMonth" parameterType="map" resultMap="DoneBookRowMap">
+        SELECT
+            DATE_FORMAT(sb.end_date, '%Y-%m-%d') AS date_str,
+            sb.shelf_book_id AS shelfBookId,
+            sb.book_id       AS bookId,
+            b.title          AS title,
+            b.cover_image_url AS coverImageUrl,
+            b.isbn13_code     AS isbn13Code
+        FROM
+            shelf_book sb
+            JOIN bookshelf bs ON bs.bookshelf_id = sb.bookshelf_id
+            JOIN book b       ON b.book_id       = sb.book_id
+        WHERE
+            bs.user_id = #{userId}
+            AND sb.end_date IS NOT NULL
+            AND YEAR(sb.end_date)  = #{year}
+            AND MONTH(sb.end_date) = #{month}
+        ORDER BY
+            sb.end_date ASC,
+            sb.added_datetime ASC,
+            sb.shelf_book_id ASC
     </select>
 </mapper>

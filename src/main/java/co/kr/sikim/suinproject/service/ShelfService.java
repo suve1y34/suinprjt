@@ -1,6 +1,7 @@
 package co.kr.sikim.suinproject.service;
 
 import co.kr.sikim.suinproject.dto.shelf.BookshelfResponse;
+import co.kr.sikim.suinproject.dto.shelf.CalendarDoneResponse;
 import co.kr.sikim.suinproject.dto.shelf.ShelfItemSearchCond;
 import co.kr.sikim.suinproject.dto.shelf.StatsResponse;
 import co.kr.sikim.suinproject.dto.shelfitem.ShelfItemAddRequest;
@@ -20,4 +21,6 @@ public interface ShelfService {
 
     ShelfItemResponse updateShelfItem(ShelfItemUpdateRequest req);
     void deleteShelfItem(ShelfItemDeleteRequest req);
+
+    List<CalendarDoneResponse> getMonthlyDoneCovers(Long userId, Integer year, Integer month);
 }

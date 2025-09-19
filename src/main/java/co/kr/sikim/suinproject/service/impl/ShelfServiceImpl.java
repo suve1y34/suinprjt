@@ -1,11 +1,10 @@
 package co.kr.sikim.suinproject.service.impl;
 
 import static co.kr.sikim.suinproject.common.SecurityUtils.currentUserIdOrThrow;
-import co.kr.sikim.suinproject.domain.Book;
-import co.kr.sikim.suinproject.domain.Bookshelf;
-import co.kr.sikim.suinproject.domain.ShelfItem;
-import co.kr.sikim.suinproject.domain.ShelfItemJoinRow;
+
+import co.kr.sikim.suinproject.domain.*;
 import co.kr.sikim.suinproject.dto.shelf.BookshelfResponse;
+import co.kr.sikim.suinproject.dto.shelf.CalendarDoneResponse;
 import co.kr.sikim.suinproject.dto.shelf.ShelfItemSearchCond;
 import co.kr.sikim.suinproject.dto.shelf.StatsResponse;
 import co.kr.sikim.suinproject.dto.shelfitem.ShelfItemAddRequest;
@@ -281,6 +280,30 @@ public class ShelfServiceImpl implements ShelfService {
                 .collect(Collectors.toList());
 
         return new StatsResponse(statusRatio, monthly);
+    }
+
+    @Override
+    public List<CalendarDoneResponse> getMonthlyDoneCovers(Long userId, Integer year, Integer month) {
+        if (userId == null) throw new SecurityException("unauthorized");
+        if (year == null || month == null || month < 1 || month > 12) {
+            throw new IllegalArgumentException("invalid year/month");
+        }
+
+        // 내 리소스 접근인지(권한) 확인: userId는 SecurityContext에서 받은 값이라고 가정
+        // (여기서 별도 권한 체크가 필요 없다면 생략 가능)
+
+        List<DoneBookRow> rows = sbMapper.selectDoneBooksByMonth(userId, year, month);
+
+        return rows.stream()
+                .map(r -> new CalendarDoneResponse(
+                        r.getDateStr(),
+                        r.getShelfBookId(),
+                        r.getBookId(),
+                        r.getTitle(),
+                        r.getCoverImageUrl(),
+                        r.getIsbn13Code()
+                ))
+                .toList();
     }
 
     private String sanitizeRichText(String s) {

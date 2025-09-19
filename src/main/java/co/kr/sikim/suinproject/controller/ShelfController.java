@@ -1,10 +1,7 @@
 package co.kr.sikim.suinproject.controller;
 
 import co.kr.sikim.suinproject.common.ApiResponse;
-import co.kr.sikim.suinproject.dto.shelf.BookshelfResponse;
-import co.kr.sikim.suinproject.dto.shelf.ShelfItemSearchCond;
-import co.kr.sikim.suinproject.dto.shelf.ShelfItemsListRequest;
-import co.kr.sikim.suinproject.dto.shelf.StatsResponse;
+import co.kr.sikim.suinproject.dto.shelf.*;
 import co.kr.sikim.suinproject.dto.shelfitem.ShelfItemAddRequest;
 import co.kr.sikim.suinproject.dto.shelfitem.ShelfItemDeleteRequest;
 import co.kr.sikim.suinproject.dto.shelfitem.ShelfItemResponse;
@@ -18,6 +15,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -85,5 +83,20 @@ public class ShelfController {
                 : Long.valueOf(String.valueOf(auth.getPrincipal()));
 
         return ApiResponse.ok(siSer.getShelfStats(userId, year));
+    }
+
+    @Operation(summary = "독서 달력 조회")
+    @GetMapping("/calendar")
+    public ApiResponse<List<CalendarDoneResponse>> getCalendarDoneCovers(
+            @RequestParam(value = "year", required = false) Integer year,
+            @RequestParam(value = "month", required = false) Integer month
+    ) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Long userId = (auth.getPrincipal() instanceof Long) ? (Long) auth.getPrincipal()
+                : Long.valueOf(String.valueOf(auth.getPrincipal()));
+
+        List<CalendarDoneResponse> list = siSer.getMonthlyDoneCovers(userId, year, month);
+
+        return ApiResponse.ok(list);
     }
 }
